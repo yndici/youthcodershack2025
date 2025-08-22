@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Budget Interpreter</title>
+    <!-- Link to your custom stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Papa Parse CDN for CSV parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <!-- Chart.js CDN for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Your Personal Budget Interpreter</h1>
+            <p>Upload a CSV file from your bank or credit card to get an instant breakdown of your spending.</p>
+        </header>
+
+        <section class="upload-section">
+            <input type="file" id="csvFile" accept=".csv">
+            <label for="csvFile" class="upload-label">Choose a CSV File</label>
+            <!-- Date filter inputs -->
+            <div class="date-filter">
+                <label for="startDate">From:</label>
+                <input type="date" id="startDate">
+                <label for="endDate">To:</label>
+                <input type="date" id="endDate">
+                <button id="applyFilter">Apply Filter</button>
+            </div>
+        </section>
+
+        <section class="summary-cards" style="display: none;">
+            <div class="card" id="incomeCard">Income: $0.00</div>
+            <div class="card" id="expenseCard">Expenses: $0.00</div>
+            <div class="card" id="balanceCard">Net Balance: $0.00</div>
+        </section>
+
+        <section class="charts-section" id="chartsSection" style="display: none;">
+            <div class="chart-box">
+                <h2>Spending Breakdown by Category</h2>
+                <canvas id="pieChart"></canvas>
+            </div>
+        </section>
+
+        <section class="preview-table-section" style="display: none;">
+            <h2>Recent Transactions</h2>
+            <div class="table-container">
+                <table id="previewTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Transaction rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Link to your custom JavaScript file -->
+    <script src="script.js"></script>
+</body>
+</html>
