@@ -67,6 +67,11 @@ function filterByDate() {
 // Process CSV and update dashboard
 function processCSV(data) {
     
+
+    document.querySelector('.summary-cards').style.display = 'flex';
+    document.getElementById('chartsSection').style.display = 'block';
+    document.querySelector('.preview-table-section').style.display = 'block'; 
+    
     // Store original data first time
     if (originalData.length === 0) {
         originalData = JSON.parse(JSON.stringify(data)); // Deep copy
