@@ -61,6 +61,23 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
         showError("Error loading categories: " + error.message);
         e.target.value = '';
     }
+    const resetButton = document.getElementById('resetButton');
+if (resetButton) {
+    resetButton.addEventListener('click', () => {
+        resetPage();
+    });
+}
+// Side widget: Show total transactions on click
+const transactionWidget = document.getElementById('transactionWidget');
+if (transactionWidget) {
+    transactionWidget.addEventListener('click', function() {
+        // Use originalData if available, otherwise show 0
+        const total = Array.isArray(originalData) ? originalData.length : 0;
+        const resultDiv = document.getElementById('widgetResult');
+        resultDiv.textContent = `Total Transactions: ${total}`;
+        resultDiv.style.display = 'block';
+    });
+}
 });
 
 // Add these new functions

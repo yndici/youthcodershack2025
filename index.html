@@ -28,7 +28,7 @@
                 <label for="endDate">To:</label>
                 <input type="date" id="endDate">
                 <button id="applyFilter">Apply Filter</button>
-                <button id="resetButton" onclick="resetPage()">Reset Dashboard</button>
+                <button id="resetButton">Reset Dashboard</button>
             </div>
         </section>
 
@@ -73,6 +73,11 @@
 
     <!-- Link to your custom JavaScript file -->
      <script src="script.js"></script>
+
+     <div class="side-widget" id="transactionWidget">
+    <span id="widgetLabel">Show Total Transactions</span>
+    <div id="widgetResult" style="display:none; margin-top:10px;"></div>
+</div>
 </body>
 </html>
 
