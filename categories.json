@@ -56,6 +56,8 @@
     "music": "Entertainment",
     "concert": "Entertainment",
     "ticket": "Entertainment",
+    "movie": "Entertainment",
+    "video game": "Entertainment",
 
     "rent": "Housing",
     "airbnb": "Housing",
@@ -74,6 +76,8 @@
     "water": "Utilities",
     "gas bill": "Utilities",
     "utility": "Utilities",
+    "electric": "Utilities",
+    "phone bill": "Utilities",
 
     "gym": "Health",
     "fitness": "Health",
@@ -108,6 +112,7 @@
     "income": "Income",
     "bonus": "Income",
     "payment": "Income",
+    "atm": "Income",
 
 
     "visa": "Credit Card Payment",

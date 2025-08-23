@@ -1,8 +1,8 @@
-
 let categories = {};
 let originalData = [];
 let currentCurrency = 'USD';
 let exchangeRates = {};
+let currentSort = { column: 'Date', direction: 'desc' };
 window.spendingTrendChartInstance = null; 
 
 document.addEventListener('DOMContentLoaded', async (event) => {
@@ -45,6 +45,46 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         setTimeout(() => {
             fairyBubble.classList.remove('visible');
         }, 5000);
+    });
+
+    document.getElementById('recentTransactions').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('allTransactions').classList.remove('active');
+        document.querySelector('.preview-table-section h2').textContent = 'Recent Transactions';
+        if (originalData.length > 0) {
+            updateTransactionTable(originalData, true);
+        }
+    });
+
+    document.getElementById('allTransactions').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('recentTransactions').classList.remove('active');
+        document.querySelector('.preview-table-section h2').textContent = 'All Transactions';
+        if (originalData.length > 0) {
+            updateTransactionTable(originalData, false);
+        }
+    });
+
+    document.querySelectorAll('#previewTable th').forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-column');
+            if (column) {
+                if (currentSort.column === column) {
+                    // Toggle direction if clicking the same column
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // New column, set default direction
+                    currentSort.column = column;
+                    currentSort.direction = 'desc';
+                }
+            
+                // Re-render table with new sort
+                if (originalData.length > 0) {
+                    const isRecentView = document.getElementById('recentTransactions').classList.contains('active');
+                    updateTransactionTable(originalData, isRecentView);
+                }
+            }
+        });
     });
 });
 
@@ -123,14 +163,8 @@ if (resetButton) {
 const transactionWidget = document.getElementById('transactionWidget');
 if (transactionWidget) {
     transactionWidget.addEventListener('click', function() {
-        // Try to count rows in the preview table (filtered), fallback to originalData
-        let total = 0;
-        const tableRows = document.querySelectorAll('#previewTable tbody tr');
-        if (tableRows.length > 0) {
-            total = tableRows.length;
-        } else if (Array.isArray(originalData)) {
-            total = originalData.length;
-        }
+        // Always use originalData length for total count
+        const total = Array.isArray(originalData) ? originalData.length : 0;
         const resultDiv = document.getElementById('widgetResult');
         resultDiv.textContent = `Total Transactions: ${total}`;
         resultDiv.style.display = 'block';
@@ -273,6 +307,9 @@ function categorizeTransaction(desc) {
 
 //process the csv and show everything
 function processCSV(data) {
+    // Set default sort to Date descending when loading new data
+    currentSort = { column: 'Date', direction: 'desc' };
+
     //clear all previous data
     const tableBody = document.querySelector("#previewTable tbody");
     tableBody.innerHTML = ""; 
@@ -305,7 +342,8 @@ if (previewTableSection) {
         d.Category = categorizeTransaction(d.Description);
         d.Date = date;
     });
-    
+    const sortedData = sortData(data, currentSort.column, currentSort.direction);
+    updateTransactionTable(sortedData, true);
 
     // summary cards
     const totalIncome = data.filter(d => d.Amount > 0).reduce((sum,d)=>sum+d.Amount,0);
@@ -542,6 +580,44 @@ function updateTotalTransactionsWidget(count) {
         resultDiv.style.display = 'block';
     }
 }
+
+function updateTransactionTable(data, recentOnly) {
+    // Sort data using current sort settings
+    let sortedData = sortData(data, currentSort.column, currentSort.direction);
+    
+    // Get recent transactions if needed (after sorting)
+    const transactionsToShow = recentOnly ? sortedData.slice(0, 20) : sortedData;
+    
+    // Update table headers with sort indicators
+    const headers = document.querySelectorAll('#previewTable th');
+    headers.forEach(header => {
+        const column = header.getAttribute('data-column');
+        if (column) {
+            header.innerHTML = `${header.textContent.split(' ')[0]} ${
+                column === currentSort.column 
+                    ? (currentSort.direction === 'asc' ? '▲' : '▼') 
+                    : ''
+            }`;
+        }
+    });
+
+    // Update table body
+    const tbody = document.querySelector("#previewTable tbody");
+    tbody.innerHTML = "";
+    
+    transactionsToShow.forEach(d => {
+        const formattedDate = d.Date.toLocaleDateString();
+        const convertedAmount = convertAmount(d.Amount, currentCurrency);
+        const row = `<tr>
+            <td>${formattedDate}</td>
+            <td>${d.Description}</td>
+            <td>${formatCurrency(convertedAmount, currentCurrency)}</td>
+            <td>${d.Category}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+    });
+}
+
 function resetPage() {
     // reset data
     originalData = [];
@@ -645,4 +721,27 @@ function formatCurrency(amount, currency) {
     }
     
     return `${symbol}${formattedAmount}`;
+}
+
+function sortData(data, column, direction) {
+    return [...data].sort((a, b) => {
+        let compareA = a[column];
+        let compareB = b[column];
+
+        // Handle different column types
+        if (column === 'Date') {
+            compareA = new Date(a.Date);
+            compareB = new Date(b.Date);
+        } else if (column === 'Amount') {
+            compareA = parseFloat(a.Amount);
+            compareB = parseFloat(b.Amount);
+        }
+
+        // Sort direction
+        if (direction === 'asc') {
+            return compareA > compareB ? 1 : -1;
+        } else {
+            return compareA < compareB ? 1 : -1;
+        }
+    });
 }

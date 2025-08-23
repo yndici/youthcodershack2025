@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Budget Interpreter</title>
+    <title>MyFinanceFairy</title>
     <!-- Link to your custom stylesheet -->
     <link rel="stylesheet" href="style.css">
     <!-- Papa Parse CDN for CSV parsing -->
@@ -65,7 +65,10 @@
             <canvas id="pieChart"></canvas>
             </div>
         </section>
-
+        <div class="table-controls">
+            <button id="recentTransactions" class="table-button active">Recent Transactions</button>
+            <button id="allTransactions" class="table-button">All Transactions</button>
+        </div>
         <section class="preview-table-section" style="display: none;">
             <h2>Recent Transactions</h2>
             <div class="preview-table-section"></div>
@@ -73,10 +76,10 @@
                 <table id="previewTable">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                            <th>Category</th>
+                            <th data-column="Date">Date</th>
+                            <th data-column="Description">Description</th>
+                            <th data-column="Amount">Amount</th>
+                            <th data-column="Category">Category</th>
                         </tr>
                     </thead>
                     <tbody>
