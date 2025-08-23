@@ -75,13 +75,13 @@
     "gas bill": "Utilities",
     "utility": "Utilities",
 
-    "gym": "Health & Fitness",
-    "fitness": "Health & Fitness",
-    "doctor": "Health & Fitness",
-    "hospital": "Health & Fitness",
-    "pharmacy": "Health & Fitness",
-    "medicine": "Health & Fitness",
-    "dentist": "Health & Fitness",
+    "gym": "Health",
+    "fitness": "Health",
+    "doctor": "Health",
+    "hospital": "Health",
+    "pharmacy": "Health",
+    "medicine": "Health",
+    "dentist": "Health",
 
     "air canada": "Travel",
     "westjet": "Travel",
@@ -107,7 +107,6 @@
     "transfer": "Income",
     "income": "Income",
     "bonus": "Income",
-    "freelance": "Income",
     "payment": "Income",
 
 
