@@ -8,12 +8,22 @@ window.spendingTrendChartInstance = null;
 document.addEventListener('DOMContentLoaded', async (event) => {
     await fetchExchangeRates();
 
+    // DARK MODE TOGGLE
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️ Light Mode' : '🌙 Dark Mode';
+        });
+    }
+
     document.getElementById('currencySelect').addEventListener('change', function(e) {
         currentCurrency = e.target.value;
         if (originalData.length > 0) {
             processCSV([...originalData]); 
         }
     });
+
     const fairy = document.getElementById('fairy');
     const fairyMessage = document.getElementById('fairyMessage');
     const fairyBubble = document.querySelector('.fairy-message-bubble');

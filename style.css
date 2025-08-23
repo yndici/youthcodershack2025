@@ -89,7 +89,7 @@ p {
     text-align: center;
     font-size: 1.13rem;
     font-weight: 600;
-    color: #5f27cd;
+    color: #c77dff;
     width: calc(33% - 20px); 
     min-width: 200px;
     max-width: 300px;
@@ -140,7 +140,7 @@ p {
 }
 
 .chart-box {
-    background: #fff;
+    background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%);
     padding: 40px;
     border-radius: 14px;
     box-shadow: 0 4px 16px rgba(95,39,205,0.07);
@@ -447,4 +447,134 @@ tr:nth-child(even) td {
 
 .fairy-message-bubble.visible {
     opacity: 1;
+}
+
+body.dark-mode {
+    background: #232946;
+    color: #f4f4f4;
+}
+
+body.dark-mode .container,
+body.dark-mode .transactions-container,
+body.dark-mode .upload-widget,
+body.dark-mode .card,
+body.dark-mode .summary-cards,
+body.dark-mode .preview-table-section,
+body.dark-mode .table-container {
+    background: #232946 !important;
+    color: #ffe0fa !important;
+    border-color: #393e5c !important;
+    box-shadow: 0 4px 18px rgba(20,20,40,0.25);
+}
+
+body.dark-mode table {
+    background: #232946 !important;
+    color: #ffe0fa !important;
+    border-color: #393e5c !important;
+}
+
+body.dark-mode th,
+body.dark-mode td {
+    background: #232946 !important;
+    color: #ffe0fa !important;
+    border-color: #393e5c !important;
+}
+
+body.dark-mode tr:nth-child(even) td {
+    background: #282b4a !important;
+}
+
+body.dark-mode .fairy-message-bubble {
+    background-color: #232946 !important;
+    color: #ffe0fa !important;
+    border: 1.5px solid #c77dff !important;
+}
+body.dark-mode .side-widget {
+    border: 1.5px solid #c77dff !important;
+}
+
+#darkModeToggle {
+    position: fixed;
+    top: 32px;
+    right: 32px;
+    z-index: 2000;
+    background: linear-gradient(90deg, #5f27cd 60%, #00b894 100%);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: 1.5px solid #e0e7ff;
+    font-size: 1.08rem;
+    font-weight: 600;
+    box-shadow: 0 2px 12px rgba(95,39,205,0.10);
+    cursor: pointer;
+    transition: 
+        background 0.2s,
+        color 0.2s,
+        box-shadow 0.2s,
+        border-color 0.2s,
+        transform 0.15s;
+}
+
+#darkModeToggle:hover {
+    background: linear-gradient(90deg, #00b894 60%, #5f27cd 100%);
+    color: #ffe0fa;
+    border-color: #c77dff;
+    box-shadow: 0 6px 24px rgba(95,39,205,0.18);
+    transform: scale(1.05);
+}
+
+body.dark-mode #darkModeToggle {
+    background: linear-gradient(90deg, #393e5c 60%, #c77dff 100%);
+    color: #ffe0fa;
+    border: 1.5px solid #c77dff;
+    box-shadow: 0 2px 12px rgba(199,125,255,0.10);
+}
+
+body.dark-mode #darkModeToggle:hover {
+    background: linear-gradient(90deg, #c77dff 60%, #393e5c 100%);
+    color: #fff;
+    border-color: #ffe0fa;
+    box-shadow: 0 6px 24px rgba(199,125,255,0.18);
+}
+body.dark-mode .upload-label,
+body.dark-mode #applyFilter,
+body.dark-mode #resetButton,
+body.dark-mode #exportCSV {
+    background: linear-gradient(90deg, #393e5c 60%, #c77dff 100%) !important;
+    color: #ffe0fa !important;
+    border: 1.5px solid #c77dff !important;
+    box-shadow: 0 2px 12px rgba(199,125,255,0.10);
+}
+
+body.dark-mode .upload-label:hover,
+body.dark-mode #applyFilter:hover,
+body.dark-mode #resetButton:hover,
+body.dark-mode #exportCSV:hover {
+    background: linear-gradient(90deg, #c77dff 60%, #393e5c 100%) !important;
+    color: #fff !important;
+    border-color: #ffe0fa !important;
+    box-shadow: 0 6px 24px rgba(199,125,255,0.18);
+}
+
+.side-widget,
+.side-widget #widgetLabel,
+.side-widget #widgetResult {
+    color: #5f27cd !important; /* dark purple */
+}
+
+.charts-section,
+.chart-box {
+    background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%);
+    color: #5f27cd !important; /* dark purple */
+}
+
+/* Dark mode: same light purple background, light purple text */
+body.dark-mode .charts-section,
+body.dark-mode .chart-box {
+    background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%) !important;
+    color: #c77dff !important; /* light purple */
+    border-color: #c77dff !important;
+}
+body.dark-mode h1 {
+    color: #fff !important;
 }
