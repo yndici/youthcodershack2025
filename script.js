@@ -14,6 +14,28 @@ document.addEventListener('DOMContentLoaded', async (event) => {
             processCSV([...originalData]); 
         }
     });
+    const fairy = document.getElementById('fairy');
+    const fairyMessage = document.getElementById('fairyMessage');
+    const fairyBubble = document.querySelector('.fairy-message-bubble');
+
+    if (!fairy || !fairyMessage || !fairyBubble) return; // Safety check
+
+    const messages = [
+        "🌟 Try uploading a new CSV to see updated insights.",
+        "💡 Tip: You can filter your transactions by date!",
+        "✨ Did you know? You can export your filtered data as CSV.",
+        "💸 Keep an eye on your net balance for healthy finances!"
+    ];
+    let messageIndex = 0;
+
+    fairy.addEventListener('click', () => {
+        fairyBubble.classList.add('visible');
+        fairyMessage.textContent = messages[messageIndex];
+        messageIndex = (messageIndex + 1) % messages.length;
+        setTimeout(() => {
+            fairyBubble.classList.remove('visible');
+        }, 5000);
+    });
 });
 
 
@@ -411,16 +433,7 @@ function analyzeSpendingTrends(data) {
         averageExpense: averageLineData
     };
 }
-const fairy = document.getElementById('fairy');
-const fairyMessage = document.getElementById('fairyMessage');
-const fairyBubble = document.querySelector('.fairy-message-bubble');
 
-const messages = [
-        "🌟 Try uploading a new CSV to see updated insights.",
-        "💡 Tip: You can filter your transactions by date!",
-        "✨ Did you know? You can export your filtered data as CSV.",
-        "💸 Keep an eye on your net balance for healthy finances!"
-];
 
 let messageIndex = 0;
 
