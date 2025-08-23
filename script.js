@@ -1,7 +1,21 @@
-document.addEventListener('DOMContentLoaded', (event) => {
+
 let categories = {};
 let originalData = [];
+let currentCurrency = 'USD';
+let exchangeRates = {};
 window.spendingTrendChartInstance = null; 
+
+document.addEventListener('DOMContentLoaded', async (event) => {
+    await fetchExchangeRates();
+
+    document.getElementById('currencySelect').addEventListener('change', function(e) {
+        currentCurrency = e.target.value;
+        if (originalData.length > 0) {
+            processCSV([...originalData]); 
+        }
+    });
+});
+
 
 
 //colour coded categories for pie chart
@@ -255,15 +269,20 @@ if (previewTableSection) {
         d.Category = categorizeTransaction(d.Description);
         d.Date = date;
     });
+    
 
     // summary cards
     const totalIncome = data.filter(d => d.Amount > 0).reduce((sum,d)=>sum+d.Amount,0);
     const totalExpense = data.filter(d => d.Amount < 0).reduce((sum,d)=>sum+d.Amount,0);
     const netBalance = totalIncome + totalExpense;
 
-    document.getElementById('incomeCard').textContent = `Income: $${totalIncome.toFixed(2)}`;
-    document.getElementById('expenseCard').textContent = `Expenses: $${(-totalExpense).toFixed(2)}`;
-    document.getElementById('balanceCard').textContent = `Net Balance: $${netBalance.toFixed(2)}`;
+    const convertedIncome = convertAmount(totalIncome, currentCurrency);
+    const convertedExpense = convertAmount(totalExpense, currentCurrency);
+    const convertedBalance = convertAmount(netBalance, currentCurrency);
+
+    document.getElementById('incomeCard').textContent = `Income: ${formatCurrency(convertedIncome, currentCurrency)}`;
+    document.getElementById('expenseCard').textContent = `Expenses: ${formatCurrency(-convertedExpense, currentCurrency)}`;
+    document.getElementById('balanceCard').textContent = `Net Balance: ${formatCurrency(convertedBalance, currentCurrency)}`;
 
     // create pie chart
     const categoryTotals = {};
@@ -306,7 +325,8 @@ if (previewTableSection) {
     tbody.innerHTML = "";
     data.slice(0, 20).forEach(d => {
         const formattedDate = d.Date.toLocaleDateString();
-        const row = `<tr><td>${formattedDate}</td><td>${d.Description}</td><td>$${Math.abs(d.Amount).toFixed(2)}</td><td>${d.Category}</td></tr>`;
+        const convertedAmount = convertAmount(d.Amount, currentCurrency);
+        const row = `<tr><td>${formattedDate}</td><td>${d.Description}</td><td>${formatCurrency(convertedAmount, currentCurrency)}</td><td>${d.Category}</td></tr>`;
         tbody.innerHTML += row;
     });
     const trendData = analyzeSpendingTrends(data);
@@ -323,6 +343,14 @@ document.addEventListener('keydown', function(event) {
 
 });
 
+document.getElementById('currencySelect').addEventListener('change', function(e) {
+    currentCurrency = e.target.value;
+    if (originalData.length > 0) {
+        processCSV(originalData);
+    }
+});
+
+
 //function to add tips and insights based on spending trends
 function analyzeSpendingTrends(data) {
     const monthlyTotals = {};
@@ -330,10 +358,11 @@ function analyzeSpendingTrends(data) {
 
     data.forEach(d => {
         const month = d.Date.toISOString().substring(0, 7);
+        const convertedAmount = convertAmount(d.Amount, currentCurrency);
         if (d.Amount < 0) {
-            monthlyTotals[month] = (monthlyTotals[month] || 0) + Math.abs(d.Amount);
+            monthlyTotals[month] = (monthlyTotals[month] || 0) + Math.abs(convertedAmount);
         } else {
-            monthlyIncome[month] = (monthlyIncome[month] || 0) + d.Amount;
+            monthlyIncome[month] = (monthlyIncome[month] || 0) + convertedAmount;
         }
     });
 
@@ -348,18 +377,16 @@ function analyzeSpendingTrends(data) {
 
     const totalExpensesAcrossMonths = Object.values(monthlyTotals).reduce((sum, total) => sum + total, 0);
     const averageMonthlyExpense = totalExpensesAcrossMonths / allMonths.length;
-
-    // This gets the most recent month from your data, which is correct
-    const currentMonth = months[months.length - 1]; 
+    const currentMonth = months[months.length - 1];
     const currentMonthExpense = monthlyTotals[currentMonth] || 0;
 
     let insightMessage = '';
     if (currentMonthExpense > averageMonthlyExpense) {
-        insightMessage = `Spending more than average this month: $${currentMonthExpense.toFixed(2)} vs $${averageMonthlyExpense.toFixed(2)}. Keep an eye on your budget!`;
+        insightMessage = `Spending more than average this month: ${formatCurrency(currentMonthExpense, currentCurrency)} vs ${formatCurrency(averageMonthlyExpense, currentCurrency)}. Keep an eye on your budget!`;
     } else if (currentMonthExpense < averageMonthlyExpense) {
-        insightMessage = `Spending less than average this month: $${currentMonthExpense.toFixed(2)} vs $${averageMonthlyExpense.toFixed(2)}. Great job!`;
+        insightMessage = `Spending less than average this month: ${formatCurrency(currentMonthExpense, currentCurrency)} vs ${formatCurrency(averageMonthlyExpense, currentCurrency)}. Great job!`;
     } else {
-        insightMessage = `You are currently on track with your monthly average spending ($${averageMonthlyExpense.toFixed(2)}).`;
+        insightMessage = `You are currently on track with your monthly average spending (${formatCurrency(averageMonthlyExpense, currentCurrency)}).`;
     }
 
     const insightsCard = document.getElementById('insightsCard');
@@ -520,4 +547,48 @@ function resetPage() {
     resultDiv.style.display = 'none';
 }
 }
-});
+
+
+async function fetchExchangeRates() {
+    const API_KEY = '8d2cdf7ff1da23853045b0ef';
+    try {
+        const response = await fetch(`https://v6.exchangerate-api.com/v6/8d2cdf7ff1da23853045b0ef/latest/USD`);
+        const data = await response.json();
+        if (data.result === "success") {
+            exchangeRates = data.conversion_rates;
+            console.log('Exchange rates loaded:', exchangeRates);
+        } else {
+            throw new Error('Failed to load exchange rates');
+        }
+    } catch (error) {
+        console.error('Error fetching exchange rates:', error);
+        showError('Failed to load currency conversion rates');
+    }
+}
+
+function convertAmount(amount, toCurrency) {
+    if (!exchangeRates || !exchangeRates[toCurrency]) {
+        console.error('Exchange rates not available for', toCurrency);
+        return amount;
+    }
+    
+    if (toCurrency === 'USD') return amount;
+    return amount * exchangeRates[toCurrency];
+}
+function formatCurrency(amount, currency) {
+    const symbols = {
+        'USD': '$', 'EUR': '€', 'GBP': '£',
+        'CAD': 'CA$', 'AUD': 'A$', 'JPY': '¥',
+        'CNY': '¥'
+    };
+
+    const symbol = symbols[currency] || '$';
+    const formattedAmount = Math.abs(amount).toFixed(2);
+    
+    
+    if (currency === 'JPY') {
+        return `${symbol}${Math.round(Math.abs(amount))}`;
+    }
+    
+    return `${symbol}${formattedAmount}`;
+}
