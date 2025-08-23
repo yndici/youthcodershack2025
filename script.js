@@ -263,12 +263,14 @@ if (trendData) {
 }
 }
 
+//shortcut to reset page
 document.addEventListener('keydown', function(event) {
     if (event.key.toLowerCase() === 'r') {
         resetPage();
     }
 });
 
+//function to add tips and insights based on spending trends
 function analyzeSpendingTrends(data) {
     const monthlyTotals = {};
     const monthlyIncome = {};
@@ -326,8 +328,10 @@ function analyzeSpendingTrends(data) {
     };
 }
 
+//function to make chart
 function renderTrendChart(chartData) {
     const ctx = document.getElementById('spendingTrendChart').getContext('2d');
+    // clear old chart if exists
     if (window.spendingTrendChartInstance) {
         window.spendingTrendChartInstance.destroy(); 
     }
@@ -340,10 +344,10 @@ function renderTrendChart(chartData) {
     {
         label: 'Monthly Expenses',
         data: chartData.monthlyExpenses,
-        backgroundColor: '#fd0037ff', // This color makes the bars visible
+        backgroundColor: '#fd0037ff', 
         borderColor: '#fd0037ff',
         borderWidth: 1,
-        order: 2 // This ensures the bars are drawn behind the average line
+        order: 2 
     },
     {
         label: 'Average Monthly Expense',
@@ -355,7 +359,7 @@ function renderTrendChart(chartData) {
         tension: 0.1,
         pointRadius: 3,
         borderWidth: 3,
-        order: 1 // This ensures the line is drawn on top
+        order: 1 
     }
 ]
         },
@@ -386,7 +390,7 @@ function renderTrendChart(chartData) {
                                 label += ': ';
                             }
                             if (context.parsed.y !== null) {
-                                // Format the amount as currency
+                                // format the amount as currency
                                 label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
                             }
                             return label;
@@ -398,11 +402,12 @@ function renderTrendChart(chartData) {
     });
 }
 
+//reset and hide everything 
 function resetPage() {
-    // Reset all data
+    // reset data
     originalData = [];
     
-    // Clear and hide chart
+    // clear all charts and containers
     if (window.pieChartInstance) {
         window.pieChartInstance.destroy();
         window.pieChartInstance = null;
@@ -418,39 +423,34 @@ function resetPage() {
         chartContainer.style.display = 'none';
     }
 
-    // Hide summary cards section
     const summaryCards = document.querySelector('.summary-cards');
     if (summaryCards) {
         summaryCards.style.display = 'none';
     }
 
-    // Hide table section
     const tableSection = document.querySelector('.preview-table-section');
     if (tableSection) {
         tableSection.style.display = 'none';
     }
 
-    // Reset summary card values
+    // reset all inputs
     document.getElementById('incomeCard').textContent = 'Income: $0.00';
     document.getElementById('expenseCard').textContent = 'Expenses: $0.00';
     document.getElementById('balanceCard').textContent = 'Net Balance: $0.00';
 
-    // Reset file input
     document.getElementById('csvFile').value = '';
 
-    // Reset date filters
     const startDate = document.getElementById('startDate');
     const endDate = document.getElementById('endDate');
     if (startDate) startDate.value = '';
     if (endDate) endDate.value = '';
 
-    // Clear error message if present
+    // clear error message if present
     const errorMessage = document.getElementById('errorMessage');
     if (errorMessage) {
         errorMessage.style.display = 'none';    
     }
 
-    // Clear and hide trend chart
     if (window.spendingTrendChartInstance) {
     window.spendingTrendChartInstance.destroy();
     window.spendingTrendChartInstance = null;
