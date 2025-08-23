@@ -80,6 +80,32 @@ if (transactionWidget) {
 }
 });
 
+document.getElementById('applyFilter').addEventListener('click', function() {
+    const startDate = new Date(document.getElementById('startDate').value);
+    const endDate = new Date(document.getElementById('endDate').value);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        showError('Please select both start and end dates');
+        return;
+    }
+
+    // Set times to start and end of day
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    const filteredData = originalData.filter(d => {
+        const transactionDate = new Date(d.Date);
+        return transactionDate >= startDate && transactionDate <= endDate;
+    });
+
+    if (filteredData.length === 0) {
+        showError('No transactions found in the selected date range');
+        return;
+    }
+
+    processCSV(filteredData);
+});
+
 // Add these new functions
 function validateCSV(data) {
     if (data.length === 0) return false;
