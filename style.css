@@ -73,33 +73,59 @@ p {
 /* Summary cards */
 .summary-cards {
     display: flex;
-    justify-content: space-around;
     flex-wrap: wrap;
-    gap: 1.2rem;
-    margin-bottom: 2.5rem;
-    max-width: 700px;
-    margin: 0 auto 2.5rem auto;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 2rem auto;
+    justify-content: center;
 }
 
 .card {
     background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%);
     border: 1.5px solid #e0e7ff;
     border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 1.2rem 1.5rem;
     text-align: center;
-    min-width: 160px;
     font-size: 1.13rem;
     font-weight: 600;
     color: #5f27cd;
-    box-shadow: 0 2px 8px rgba(95,39,205,0.07);
-    transition: box-shadow 0.18s, transform 0.18s;
+    width: calc(33% - 20px); 
+    min-width: 200px;
+    max-width: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
 }
 
+#insightsCard {
+    flex: 1 1 100%;
+    max-width: 70%;
+    margin-top: 20px;
+}
 .card:hover {
     box-shadow: 0 6px 24px rgba(95,39,205,0.13);
-    transform: translateY(-2px) scale(1.03);
+    transform: translateY(-5px) scale(1.03);
 }
+@media (max-width: 768px) {
+    .summary-cards {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        padding: 0 15px;
+    }
 
+    .card {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    #insightsCard {
+        width: 100%;
+        max-width: 300px;
+    }
+}
 /* Charts section */
 .charts-section {
     display: flex;
