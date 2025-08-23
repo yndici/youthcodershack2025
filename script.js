@@ -307,6 +307,7 @@ if (previewTableSection) {
 if (trendData) {
     renderTrendChart(trendData);
 }
+updateTotalTransactionsWidget(data.length);
 }
 
 //shortcut to reset page
@@ -314,6 +315,7 @@ document.addEventListener('keydown', function(event) {
     if (event.key.toLowerCase() === 'r') {
         resetPage();
     }
+
 });
 
 //function to add tips and insights based on spending trends
@@ -447,8 +449,13 @@ function renderTrendChart(chartData) {
         }
     });
 }
-
-//reset and hide everything 
+function updateTotalTransactionsWidget(count) {
+    const resultDiv = document.getElementById('widgetResult');
+    if (resultDiv) {
+        resultDiv.textContent = `Total Transactions: ${count}`;
+        resultDiv.style.display = 'block';
+    }
+}
 function resetPage() {
     // reset data
     originalData = [];
@@ -501,5 +508,11 @@ function resetPage() {
     window.spendingTrendChartInstance.destroy();
     window.spendingTrendChartInstance = null;
     }
+
+    //Hide Total Transactions widget result
+    const resultDiv = document.getElementById('widgetResult');
+    if (resultDiv) {
+    resultDiv.style.display = 'none';
+}
 }
 });

@@ -19,8 +19,10 @@
         </header>
 
         <section class="upload-section">
+        <div class="upload-widget"></div>
             <input type="file" id="csvFile" accept=".csv">
             <label for="csvFile" class="upload-label">Choose a CSV File</label>
+        </div>
             <!-- Date filter inputs -->
             <div class="date-filter">
                 <label for="startDate">From:</label>
@@ -53,6 +55,7 @@
 
         <section class="preview-table-section" style="display: none;">
             <h2>Recent Transactions</h2>
+            <div class="preview-table-section"></div>
             <div class="table-container">
                 <table id="previewTable">
                     <thead>
@@ -67,6 +70,7 @@
                         <!-- Transaction rows will be inserted here by JavaScript -->
                     </tbody>
                 </table>
+            </div>
             </div>
         </section>
 
