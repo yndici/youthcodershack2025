@@ -407,6 +407,34 @@ function analyzeSpendingTrends(data) {
         averageExpense: averageLineData
     };
 }
+const fairy = document.getElementById('fairy');
+const fairyMessage = document.getElementById('fairyMessage');
+const fairyBubble = document.querySelector('.fairy-message-bubble');
+
+const messages = [
+        "🌟 Try uploading a new CSV to see updated insights.",
+        "💡 Tip: You can filter your transactions by date!",
+        "✨ Did you know? You can export your filtered data as CSV.",
+        "💸 Keep an eye on your net balance for healthy finances!"
+];
+
+let messageIndex = 0;
+
+fairy.addEventListener('click', () => {
+    // Show the message bubble
+    fairyBubble.classList.add('visible');
+
+    // Update the message
+    fairyMessage.textContent = messages[messageIndex];
+    
+    // Cycle to the next message
+    messageIndex = (messageIndex + 1) % messages.length;
+
+    // Hide the message after a few seconds
+    setTimeout(() => {
+        fairyBubble.classList.remove('visible');
+    }, 5000);
+});
 
 //function to make chart
 function renderTrendChart(chartData) {
