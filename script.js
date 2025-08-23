@@ -37,6 +37,10 @@ const categoryColors = {
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
+    const widgetResult = document.getElementById('widgetResult');
+    if (widgetResult) {
+        widgetResult.style.display = 'none';
+    }
 
     try {
         const response = await fetch('categories.json');
@@ -435,7 +439,6 @@ fairy.addEventListener('click', () => {
         fairyBubble.classList.remove('visible');
     }, 5000);
 });
-
 //function to make chart
 function renderTrendChart(chartData) {
     const ctx = document.getElementById('spendingTrendChart').getContext('2d');
