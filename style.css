@@ -127,8 +127,8 @@ th {
     
     flex: 1 1 0; 
     min-width: 400px; 
-    max-width: 800px; 
-    height: 400px; 
+    max-width: 1000px; 
+    height: 1000px; 
 
     display: flex;
     flex-direction: column;

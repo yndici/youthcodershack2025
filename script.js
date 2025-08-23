@@ -192,6 +192,16 @@ if (previewTableSection) {
         options: { 
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    font: {
+                        size: 14 // Increased font size
+                    }
+                }
+            }
+        }
         }
     });
 
