@@ -537,9 +537,9 @@ body.dark-mode .table-button.active {
 
 #darkModeToggle {
     position: fixed;
-    top: 32px;
-    right: 32px;
-    z-index: 2000;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
     background: linear-gradient(90deg, #5f27cd 60%, #00b894 100%);
     color: #fff;
     padding: 12px 28px;
