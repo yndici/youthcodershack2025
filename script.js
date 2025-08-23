@@ -1,6 +1,7 @@
-
+document.addEventListener('DOMContentLoaded', (event) => {
 let categories = {};
 let originalData = [];
+window.spendingTrendChartInstance = null; 
 
 const categoryColors = {
     "Food & Drink": "#fd0037ff",    
@@ -130,9 +131,20 @@ function processCSV(data) {
     const tableBody = document.querySelector("#previewTable tbody");
     tableBody.innerHTML = ""; // Clear previous data
 
-    document.querySelector('.summary-cards').style.display = 'flex';
-    document.getElementById('chartsSection').style.display = 'block';
-    document.querySelector('.preview-table-section').style.display = 'block'; 
+    const summaryCards = document.querySelector('.summary-cards');
+if (summaryCards) {
+    summaryCards.style.display = 'flex';
+}
+
+const chartsSection = document.getElementById('chartsSection');
+if (chartsSection) {
+    chartsSection.style.display = 'block';
+}
+
+const previewTableSection = document.querySelector('.preview-table-section');
+if (previewTableSection) {
+    previewTableSection.style.display = 'block';
+}
 
     // Store original data first time
     if (originalData.length === 0) {
@@ -177,7 +189,10 @@ function processCSV(data) {
                 backgroundColor: categories.map(category => categoryColors[category] || categoryColors["Other"]),
             }]
         },
-        options: { responsive: true }
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+        }
     });
 
     // Table preview
@@ -188,6 +203,10 @@ function processCSV(data) {
         const row = `<tr><td>${formattedDate}</td><td>${d.Description}</td><td>$${Math.abs(d.Amount).toFixed(2)}</td><td>${d.Category}</td></tr>`;
         tbody.innerHTML += row;
     });
+    const trendData = analyzeSpendingTrends(data);
+if (trendData) {
+    renderTrendChart(trendData);
+}
 }
 
 document.addEventListener('keydown', function(event) {
@@ -195,6 +214,135 @@ document.addEventListener('keydown', function(event) {
         resetPage();
     }
 });
+
+function analyzeSpendingTrends(data) {
+    const monthlyTotals = {};
+    const monthlyIncome = {};
+
+    data.forEach(d => {
+        const month = d.Date.toISOString().substring(0, 7);
+        if (d.Amount < 0) {
+            monthlyTotals[month] = (monthlyTotals[month] || 0) + Math.abs(d.Amount);
+        } else {
+            monthlyIncome[month] = (monthlyIncome[month] || 0) + d.Amount;
+        }
+    });
+
+    const allMonths = Object.keys(monthlyTotals).sort();
+    const months = allMonths.slice(-12);
+
+    if (months.length === 0) {
+        const insightsCard = document.getElementById('insightsCard');
+        if (insightsCard) insightsCard.textContent = "Not enough data for spending trend analysis.";
+        return null;
+    }
+
+    const totalExpensesAcrossMonths = Object.values(monthlyTotals).reduce((sum, total) => sum + total, 0);
+    const averageMonthlyExpense = totalExpensesAcrossMonths / allMonths.length;
+
+    // This gets the most recent month from your data, which is correct
+    const currentMonth = months[months.length - 1]; 
+    const currentMonthExpense = monthlyTotals[currentMonth] || 0;
+
+    let insightMessage = '';
+    if (currentMonthExpense > averageMonthlyExpense) {
+        insightMessage = `Spending more than average this month: $${currentMonthExpense.toFixed(2)} vs $${averageMonthlyExpense.toFixed(2)}. Keep an eye on your budget!`;
+    } else if (currentMonthExpense < averageMonthlyExpense) {
+        insightMessage = `Spending less than average this month: $${currentMonthExpense.toFixed(2)} vs $${averageMonthlyExpense.toFixed(2)}. Great job!`;
+    } else {
+        insightMessage = `You are currently on track with your monthly average spending ($${averageMonthlyExpense.toFixed(2)}).`;
+    }
+
+    const insightsCard = document.getElementById('insightsCard');
+    if (insightsCard) {
+        insightsCard.textContent = insightMessage;
+    }
+
+    const chartLabels = months.map(m => {
+        const [year, month] = m.split('-');
+        return new Date(year, month - 1).toLocaleString('default', { month: 'short', year: '2-digit' });
+    });
+    const monthlyExpenseData = months.map(m => monthlyTotals[m] || 0);
+    const averageLineData = months.map(() => averageMonthlyExpense);
+
+    return {
+        labels: chartLabels,
+        monthlyExpenses: monthlyExpenseData,
+        averageExpense: averageLineData
+    };
+}
+
+function renderTrendChart(chartData) {
+    const ctx = document.getElementById('spendingTrendChart').getContext('2d');
+    if (window.spendingTrendChartInstance) {
+        window.spendingTrendChartInstance.destroy(); 
+    }
+
+    window.spendingTrendChartInstance = new Chart(ctx, {
+        type: 'bar', 
+        data: {
+            labels: chartData.labels, 
+            datasets: [
+    {
+        label: 'Monthly Expenses',
+        data: chartData.monthlyExpenses,
+        backgroundColor: '#fd0037ff', // This color makes the bars visible
+        borderColor: '#fd0037ff',
+        borderWidth: 1,
+        order: 2 // This ensures the bars are drawn behind the average line
+    },
+    {
+        label: 'Average Monthly Expense',
+        data: chartData.averageExpense,
+        type: 'line',
+        borderColor: '#00fcfcff',
+        backgroundColor: 'rgba(0, 252, 252, 0.2)',
+        fill: false,
+        tension: 0.1,
+        pointRadius: 3,
+        borderWidth: 3,
+        order: 1 // This ensures the line is drawn on top
+    }
+]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            scales: {
+                y: {
+                    beginAtZero: true, 
+                    title: {
+                        display: true,
+                        text: 'Amount ($)' 
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month' 
+                    }
+                }
+            },
+            plugins: {
+                tooltip: { 
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                // Format the amount as currency
+                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 
 function resetPage() {
     // Reset all data
@@ -245,6 +393,13 @@ function resetPage() {
     // Clear error message if present
     const errorMessage = document.getElementById('errorMessage');
     if (errorMessage) {
-        errorMessage.style.display = 'none';
+        errorMessage.style.display = 'none';    
+    }
+
+    // Clear and hide trend chart
+    if (window.spendingTrendChartInstance) {
+    window.spendingTrendChartInstance.destroy();
+    window.spendingTrendChartInstance = null;
     }
 }
+});

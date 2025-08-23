@@ -28,6 +28,7 @@
                 <label for="endDate">To:</label>
                 <input type="date" id="endDate">
                 <button id="applyFilter">Apply Filter</button>
+                <button id="resetButton" onclick="resetPage()">Reset Dashboard</button>
             </div>
         </section>
 
@@ -35,12 +36,17 @@
             <div class="card" id="incomeCard">Income: $0.00</div>
             <div class="card" id="expenseCard">Expenses: $0.00</div>
             <div class="card" id="balanceCard">Net Balance: $0.00</div>
+            <div class="card" id="insightsCard"></div>
         </section>
 
         <section class="charts-section" id="chartsSection" style="display: none;">
             <div class="chart-box">
-                <h2>Spending Breakdown by Category</h2>
-                <canvas id="pieChart"></canvas>
+            <h2>Monthly Spending Trends</h2>
+            <canvas id="spendingTrendChart"></canvas>
+            </div>
+            <div class="chart-box">
+            <h2>Spending Breakdown by Category</h2>
+            <canvas id="pieChart"></canvas>
             </div>
         </section>
 
@@ -66,6 +72,7 @@
     </div>
 
     <!-- Link to your custom JavaScript file -->
-    <script src="script.js"></script>
+     <script src="script.js"></script>
 </body>
 </html>
+
