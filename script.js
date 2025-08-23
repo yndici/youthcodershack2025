@@ -73,8 +73,14 @@ if (resetButton) {
 const transactionWidget = document.getElementById('transactionWidget');
 if (transactionWidget) {
     transactionWidget.addEventListener('click', function() {
-        // use originalData if available, otherwise show 0
-        const total = Array.isArray(originalData) ? originalData.length : 0;
+        // Try to count rows in the preview table (filtered), fallback to originalData
+        let total = 0;
+        const tableRows = document.querySelectorAll('#previewTable tbody tr');
+        if (tableRows.length > 0) {
+            total = tableRows.length;
+        } else if (Array.isArray(originalData)) {
+            total = originalData.length;
+        }
         const resultDiv = document.getElementById('widgetResult');
         resultDiv.textContent = `Total Transactions: ${total}`;
         resultDiv.style.display = 'block';
@@ -307,7 +313,6 @@ if (previewTableSection) {
 if (trendData) {
     renderTrendChart(trendData);
 }
-updateTotalTransactionsWidget(data.length);
 }
 
 //shortcut to reset page
