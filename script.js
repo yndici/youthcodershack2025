@@ -3,6 +3,8 @@ let categories = {};
 let originalData = [];
 window.spendingTrendChartInstance = null; 
 
+
+//colour coded categories for pie chart
 const categoryColors = {
     "Food & Drink": "#fd0037ff",    
     "Groceries": "#00ff37ff",       
@@ -17,7 +19,7 @@ const categoryColors = {
     "Other": "#C9CBCF"           
 };
 
-// Load categories from JSON
+// load categories from json file
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -25,7 +27,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
     try {
         const response = await fetch('categories.json');
         categories = await response.json();
-        
+        //use papa parse to read csv
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
@@ -35,7 +37,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                     return;
                 }
                 
-                // Clear previous data
+                // clear previous data
                 originalData = [];
                 if (window.pieChartInstance) {
                     window.pieChartInstance.destroy();
@@ -49,7 +51,7 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
                 
                 processCSV(originalData);
                 
-                // Reset file input
+                // reset file input for uploading different files
                 e.target.value = '';
             },
             error: function(err) {
@@ -61,17 +63,17 @@ document.getElementById('csvFile').addEventListener('change', async function(e) 
         showError("Error loading categories: " + error.message);
         e.target.value = '';
     }
-    const resetButton = document.getElementById('resetButton');
+    const resetButton = document.getElementById('resetButton'); //add button to reset charts without needing to refresh
 if (resetButton) {
     resetButton.addEventListener('click', () => {
         resetPage();
     });
 }
-// Side widget: Show total transactions on click
+// show all transactions widget
 const transactionWidget = document.getElementById('transactionWidget');
 if (transactionWidget) {
     transactionWidget.addEventListener('click', function() {
-        // Use originalData if available, otherwise show 0
+        // use originalData if available, otherwise show 0
         const total = Array.isArray(originalData) ? originalData.length : 0;
         const resultDiv = document.getElementById('widgetResult');
         resultDiv.textContent = `Total Transactions: ${total}`;
@@ -80,6 +82,7 @@ if (transactionWidget) {
 }
 });
 
+//filter by date range on button click
 document.getElementById('applyFilter').addEventListener('click', function() {
     const startDate = new Date(document.getElementById('startDate').value);
     const endDate = new Date(document.getElementById('endDate').value);
@@ -89,7 +92,6 @@ document.getElementById('applyFilter').addEventListener('click', function() {
         return;
     }
 
-    // Set times to start and end of day
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
 
@@ -106,18 +108,17 @@ document.getElementById('applyFilter').addEventListener('click', function() {
     processCSV(filteredData);
 });
 
-// Add these new functions
+// make sure the csv has the right columns
 function validateCSV(data) {
     if (data.length === 0) return false;
     
-    // Check if required columns exist
     const requiredColumns = ['Date', 'Description', 'Amount'];
     const headers = Object.keys(data[0]);
     return requiredColumns.every(col => headers.includes(col));
 }
 
+//show error message if csv is invalid
 function showError(message) {
-    // Create error element if it doesn't exist
     let errorDiv = document.getElementById('errorMessage');
     if (!errorDiv) {
         errorDiv = document.createElement('div');
@@ -131,13 +132,13 @@ function showError(message) {
     errorDiv.textContent = message;
     errorDiv.style.display = 'block';
     
-    // Hide error after 5 seconds
+    // hide error automatically after 5 seconds
     setTimeout(() => {
         errorDiv.style.display = 'none';
     }, 5000);
 }
 
-// Categorization helper
+// categorize transactions based on description keywords
 function categorizeTransaction(desc) {
     desc = desc.toLowerCase();
     for (const key in categories) {
@@ -146,8 +147,8 @@ function categorizeTransaction(desc) {
     return "Other";
 }
 
-
-function filterByDate() {
+//old filter function; do not use
+/*function filterByDate() {
     const startDate = new Date(document.getElementById('startDate').value + 'T00:00:00');
     const endDate = new Date(document.getElementById('endDate').value + 'T23:59:59');
     
@@ -164,15 +165,15 @@ function filterByDate() {
 
     console.log('Filtered data:', filteredData); // Debug log
     processCSV(filteredData);
-}
+}*/
 
 
 
-// Process CSV and update dashboard
+//process the csv and show everything
 function processCSV(data) {
-    
+    //clear all previous data
     const tableBody = document.querySelector("#previewTable tbody");
-    tableBody.innerHTML = ""; // Clear previous data
+    tableBody.innerHTML = ""; 
 
     const summaryCards = document.querySelector('.summary-cards');
 if (summaryCards) {
@@ -189,12 +190,12 @@ if (previewTableSection) {
     previewTableSection.style.display = 'block';
 }
 
-    // Store original data first time
+    // store original data first time
     if (originalData.length === 0) {
         originalData = JSON.parse(JSON.stringify(data)); // Deep copy
     }
 
-    // Categorize transactions
+    // preprocess data
     data.forEach(d => {
         const date = new Date(d.Date);
         date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
@@ -203,7 +204,7 @@ if (previewTableSection) {
         d.Date = date;
     });
 
-    // Summary
+    // summary cards
     const totalIncome = data.filter(d => d.Amount > 0).reduce((sum,d)=>sum+d.Amount,0);
     const totalExpense = data.filter(d => d.Amount < 0).reduce((sum,d)=>sum+d.Amount,0);
     const netBalance = totalIncome + totalExpense;
@@ -212,7 +213,7 @@ if (previewTableSection) {
     document.getElementById('expenseCard').textContent = `Expenses: $${(-totalExpense).toFixed(2)}`;
     document.getElementById('balanceCard').textContent = `Net Balance: $${netBalance.toFixed(2)}`;
 
-    // Pie chart
+    // create pie chart
     const categoryTotals = {};
     data.filter(d => d.Amount < 0).forEach(d => {
         categoryTotals[d.Category] = (categoryTotals[d.Category] || 0) + Math.abs(d.Amount);
@@ -240,7 +241,7 @@ if (previewTableSection) {
                 position: 'right',
                 labels: {
                     font: {
-                        size: 14 // Increased font size
+                        size: 14 
                     }
                 }
             }
@@ -248,7 +249,7 @@ if (previewTableSection) {
         }
     });
 
-    // Table preview
+    // make table with all transactions
     const tbody = document.querySelector("#previewTable tbody");
     tbody.innerHTML = "";
     data.slice(0, 20).forEach(d => {
