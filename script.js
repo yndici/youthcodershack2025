@@ -80,6 +80,52 @@ if (transactionWidget) {
         resultDiv.style.display = 'block';
     });
 }
+document.getElementById('exportCSV').addEventListener('click', function() {
+    // Use the currently displayed data (filtered), or originalData if not filtered
+    let dataToExport = [];
+    // Try to get the data currently in the preview table
+    const tableRows = document.querySelectorAll('#previewTable tbody tr');
+    if (tableRows.length > 0) {
+        tableRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            dataToExport.push({
+                Date: cells[0].textContent,
+                Description: cells[1].textContent,
+                Amount: cells[2].textContent,
+                Category: cells[3].textContent
+            });
+        });
+    } else {
+        // fallback: export all originalData
+        dataToExport = originalData;
+    }
+
+    if (dataToExport.length === 0) {
+        showError("No data to export!");
+        return;
+    }
+
+    // Convert to CSV string
+    const csvRows = [];
+    const headers = ['Date', 'Description', 'Amount', 'Category'];
+    csvRows.push(headers.join(','));
+    dataToExport.forEach(row => {
+        const values = headers.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`);
+        csvRows.push(values.join(','));
+    });
+    const csvString = csvRows.join('\n');
+
+    // Download as file
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'filtered_transactions.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
 });
 
 //filter by date range on button click
