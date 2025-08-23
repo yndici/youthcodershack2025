@@ -5,10 +5,12 @@ let exchangeRates = {};
 let currentSort = { column: 'Date', direction: 'desc' };
 window.spendingTrendChartInstance = null; 
 
+
+// load everything when page loads
 document.addEventListener('DOMContentLoaded', async (event) => {
     await fetchExchangeRates();
 
-    // DARK MODE TOGGLE
+    // dark mode toggle
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
         darkModeToggle.addEventListener('click', () => {
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         });
     }
 
+    // currency selector change
     document.getElementById('currencySelect').addEventListener('change', function(e) {
         currentCurrency = e.target.value;
         if (originalData.length > 0) {
@@ -24,17 +27,19 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     });
 
+    //fairy helper
     const fairy = document.getElementById('fairy');
     const fairyMessage = document.getElementById('fairyMessage');
     const fairyBubble = document.querySelector('.fairy-message-bubble');
 
-    if (!fairy || !fairyMessage || !fairyBubble) return; // Safety check
+    if (!fairy || !fairyMessage || !fairyBubble) return; 
 
     const messages = [
         "🌟 Try uploading a new CSV to see updated insights.",
         "💡 Tip: You can filter your transactions by date!",
         "✨ Did you know? You can export your filtered data as CSV.",
         "💸 Keep an eye on your net balance for healthy finances!"
+        //add more messages?
     ];
     let messageIndex = 0;
 
@@ -47,6 +52,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }, 5000);
     });
 
+
+    // toggle between recent and all transactions
     document.getElementById('recentTransactions').addEventListener('click', function() {
         this.classList.add('active');
         document.getElementById('allTransactions').classList.remove('active');
@@ -65,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     });
 
+    // sorting functions
     document.querySelectorAll('#previewTable th').forEach(header => {
         header.addEventListener('click', function() {
             const column = this.getAttribute('data-column');
@@ -105,7 +113,7 @@ const categoryColors = {
     "Other": "#C9CBCF"           
 };
 
-// load categories from json file
+// load keywords from json file
 document.getElementById('csvFile').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -159,11 +167,12 @@ if (resetButton) {
         resetPage();
     });
 }
+
+
 // show all transactions widget
 const transactionWidget = document.getElementById('transactionWidget');
 if (transactionWidget) {
     transactionWidget.addEventListener('click', function() {
-        // Always use originalData length for total count
         const total = Array.isArray(originalData) ? originalData.length : 0;
         const resultDiv = document.getElementById('widgetResult');
         resultDiv.textContent = `Total Transactions: ${total}`;
@@ -171,9 +180,7 @@ if (transactionWidget) {
     });
 }
 document.getElementById('exportCSV').addEventListener('click', function() {
-    // Use the currently displayed data (filtered), or originalData if not filtered
     let dataToExport = [];
-    // Try to get the data currently in the preview table
     const tableRows = document.querySelectorAll('#previewTable tbody tr');
     if (tableRows.length > 0) {
         tableRows.forEach(row => {
@@ -186,7 +193,6 @@ document.getElementById('exportCSV').addEventListener('click', function() {
             });
         });
     } else {
-        // fallback: export all originalData
         dataToExport = originalData;
     }
 
@@ -195,7 +201,7 @@ document.getElementById('exportCSV').addEventListener('click', function() {
         return;
     }
 
-    // Convert to CSV string
+    // csv conversion
     const csvRows = [];
     const headers = ['Date', 'Description', 'Amount', 'Category'];
     csvRows.push(headers.join(','));
@@ -205,7 +211,7 @@ document.getElementById('exportCSV').addEventListener('click', function() {
     });
     const csvString = csvRows.join('\n');
 
-    // Download as file
+    //download
     const blob = new Blob([csvString], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -218,7 +224,7 @@ document.getElementById('exportCSV').addEventListener('click', function() {
 });
 });
 
-//filter by date range on button click
+//filter by date range button
 document.getElementById('applyFilter').addEventListener('click', function() {
     const startDate = new Date(document.getElementById('startDate').value);
     const endDate = new Date(document.getElementById('endDate').value);
@@ -244,77 +250,16 @@ document.getElementById('applyFilter').addEventListener('click', function() {
     processCSV(filteredData);
 });
 
-// make sure the csv has the right columns
-function validateCSV(data) {
-    if (data.length === 0) return false;
-    
-    const requiredColumns = ['Date', 'Description', 'Amount'];
-    const headers = Object.keys(data[0]);
-    return requiredColumns.every(col => headers.includes(col));
-}
-
-//show error message if csv is invalid
-function showError(message) {
-    let errorDiv = document.getElementById('errorMessage');
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = 'errorMessage';
-        document.querySelector('.container').insertBefore(
-            errorDiv, 
-            document.querySelector('.container').firstChild
-        );
-    }
-    
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    
-    // hide error automatically after 5 seconds
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
-}
-
-// categorize transactions based on description keywords
-function categorizeTransaction(desc) {
-    desc = desc.toLowerCase();
-    for (const key in categories) {
-        if (desc.includes(key)) return categories[key];
-    }
-    return "Other";
-}
-
-//old filter function; do not use
-/*function filterByDate() {
-    const startDate = new Date(document.getElementById('startDate').value + 'T00:00:00');
-    const endDate = new Date(document.getElementById('endDate').value + 'T23:59:59');
-    
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        alert('Please select valid dates');
-        return;
-    }
-
-    console.log('Filtering between:', startDate, 'and', endDate); // Debug log
-
-    const filteredData = originalData.filter(d => {
-        return d.Date >= startDate && d.Date <= endDate;
-    });
-
-    console.log('Filtered data:', filteredData); // Debug log
-    processCSV(filteredData);
-}*/
-
-
-
-//process the csv and show everything
+// processes csv data and shows charts+everythign
 function processCSV(data) {
-    // Set default sort to Date descending when loading new data
+    
     currentSort = { column: 'Date', direction: 'desc' };
 
-    //clear all previous data
     const tableBody = document.querySelector("#previewTable tbody");
     tableBody.innerHTML = ""; 
 
     const summaryCards = document.querySelector('.summary-cards');
+
 if (summaryCards) {
     summaryCards.style.display = 'flex';
 }
@@ -331,7 +276,7 @@ if (previewTableSection) {
 
     // store original data first time
     if (originalData.length === 0) {
-        originalData = JSON.parse(JSON.stringify(data)); // Deep copy
+        originalData = JSON.parse(JSON.stringify(data)); 
     }
 
     // preprocess data
@@ -365,7 +310,7 @@ if (previewTableSection) {
     });
 
     const ctx = document.getElementById('pieChart').getContext('2d');
-    if (window.pieChartInstance) window.pieChartInstance.destroy(); // clear old chart
+    if (window.pieChartInstance) window.pieChartInstance.destroy(); // clear old chart if its there
 
     const categories = Object.keys(categoryTotals);
 
@@ -486,16 +431,11 @@ function analyzeSpendingTrends(data) {
 let messageIndex = 0;
 
 fairy.addEventListener('click', () => {
-    // Show the message bubble
-    fairyBubble.classList.add('visible');
 
-    // Update the message
+    fairyBubble.classList.add('visible');
     fairyMessage.textContent = messages[messageIndex];
-    
-    // Cycle to the next message
     messageIndex = (messageIndex + 1) % messages.length;
 
-    // Hide the message after a few seconds
     setTimeout(() => {
         fairyBubble.classList.remove('visible');
     }, 5000);
@@ -582,13 +522,12 @@ function updateTotalTransactionsWidget(count) {
 }
 
 function updateTransactionTable(data, recentOnly) {
-    // Sort data using current sort settings
+
     let sortedData = sortData(data, currentSort.column, currentSort.direction);
     
-    // Get recent transactions if needed (after sorting)
+
     const transactionsToShow = recentOnly ? sortedData.slice(0, 20) : sortedData;
-    
-    // Update table headers with sort indicators
+
     const headers = document.querySelectorAll('#previewTable th');
     headers.forEach(header => {
         const column = header.getAttribute('data-column');
@@ -601,7 +540,7 @@ function updateTransactionTable(data, recentOnly) {
         }
     });
 
-    // Update table body
+ 
     const tbody = document.querySelector("#previewTable tbody");
     tbody.innerHTML = "";
     
@@ -742,6 +681,176 @@ function sortData(data, column, direction) {
             return compareA > compareB ? 1 : -1;
         } else {
             return compareA < compareB ? 1 : -1;
+        }
+    });
+}
+
+// categorizes transaction based on keywords in description
+function categorizeTransaction(desc) {
+    desc = desc.toLowerCase();
+    for (const key in categories) {
+        if (desc.includes(key)) return categories[key];
+    }
+    return "Other";
+}
+
+// validates if csv file has required columns
+function validateCSV(data) {
+    if (data.length === 0) return false;
+    
+    const requiredColumns = ['Date', 'Description', 'Amount'];
+    const headers = Object.keys(data[0]);
+    return requiredColumns.every(col => headers.includes(col));
+}
+
+// displays error message for 5 seconds
+function showError(message) {
+    let errorDiv = document.getElementById('errorMessage');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'errorMessage';
+        document.querySelector('.container').insertBefore(
+            errorDiv, 
+            document.querySelector('.container').firstChild
+        );
+    }
+    
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    
+    // hide error automatically after 5 seconds
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+}
+
+// analyzes spending patterns and generates insights
+function analyzeSpendingTrends(data) {
+    const monthlyTotals = {};
+    const monthlyIncome = {};
+
+    data.forEach(d => {
+        const month = d.Date.toISOString().substring(0, 7);
+        const convertedAmount = convertAmount(d.Amount, currentCurrency);
+        if (d.Amount < 0) {
+            monthlyTotals[month] = (monthlyTotals[month] || 0) + Math.abs(convertedAmount);
+        } else {
+            monthlyIncome[month] = (monthlyIncome[month] || 0) + convertedAmount;
+        }
+    });
+
+    const allMonths = Object.keys(monthlyTotals).sort();
+    const months = allMonths.slice(-12);
+
+    if (months.length === 0) {
+        const insightsCard = document.getElementById('insightsCard');
+        if (insightsCard) insightsCard.textContent = "Not enough data for spending trend analysis.";
+        return null;
+    }
+
+    const totalExpensesAcrossMonths = Object.values(monthlyTotals).reduce((sum, total) => sum + total, 0);
+    const averageMonthlyExpense = totalExpensesAcrossMonths / allMonths.length;
+    const currentMonth = months[months.length - 1];
+    const currentMonthExpense = monthlyTotals[currentMonth] || 0;
+
+    let insightMessage = '';
+    if (currentMonthExpense > averageMonthlyExpense) {
+        insightMessage = `Spending more than average this month: ${formatCurrency(currentMonthExpense, currentCurrency)} vs ${formatCurrency(averageMonthlyExpense, currentCurrency)}. Keep an eye on your budget!`;
+    } else if (currentMonthExpense < averageMonthlyExpense) {
+        insightMessage = `Spending less than average this month: ${formatCurrency(currentMonthExpense, currentCurrency)} vs ${formatCurrency(averageMonthlyExpense, currentCurrency)}. Great job!`;
+    } else {
+        insightMessage = `You are currently on track with your monthly average spending (${formatCurrency(averageMonthlyExpense, currentCurrency)}).`;
+    }
+
+    const insightsCard = document.getElementById('insightsCard');
+    if (insightsCard) {
+        insightsCard.textContent = insightMessage;
+    }
+
+    const chartLabels = months.map(m => {
+        const [year, month] = m.split('-');
+        return new Date(year, month - 1).toLocaleString('default', { month: 'short', year: '2-digit' });
+    });
+    const monthlyExpenseData = months.map(m => monthlyTotals[m] || 0);
+    const averageLineData = months.map(() => averageMonthlyExpense);
+
+    return {
+        labels: chartLabels,
+        monthlyExpenses: monthlyExpenseData,
+        averageExpense: averageLineData
+    };
+}
+
+// creates bar and line chart for spending trends
+function renderTrendChart(chartData) {
+    const ctx = document.getElementById('spendingTrendChart').getContext('2d');
+    // clear old chart if exists
+    if (window.spendingTrendChartInstance) {
+        window.spendingTrendChartInstance.destroy(); 
+    }
+
+    window.spendingTrendChartInstance = new Chart(ctx, {
+        type: 'bar', 
+        data: {
+            labels: chartData.labels, 
+            datasets: [
+    {
+        label: 'Monthly Expenses',
+        data: chartData.monthlyExpenses,
+        backgroundColor: '#fd0037ff', 
+        borderColor: '#fd0037ff',
+        borderWidth: 1,
+        order: 2 
+    },
+    {
+        label: 'Average Monthly Expense',
+        data: chartData.averageExpense,
+        type: 'line',
+        borderColor: '#00fcfcff',
+        backgroundColor: 'rgba(0, 252, 252, 0.2)',
+        fill: false,
+        tension: 0.1,
+        pointRadius: 3,
+        borderWidth: 3,
+        order: 1 
+    }
+]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            scales: {
+                y: {
+                    beginAtZero: true, 
+                    title: {
+                        display: true,
+                        text: 'Amount ($)' 
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month' 
+                    }
+                }
+            },
+            plugins: {
+                tooltip: { 
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                // format the amount as currency
+                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
         }
     });
 }
