@@ -3,61 +3,42 @@ let originalData = [];
 let currentCurrency = 'USD';
 let exchangeRates = {};
 let currentSort = { column: 'Date', direction: 'desc' };
-window.spendingTrendChartInstance = null; 
-
+let currentlyEditingGoalId = null; 
+let spendingTrendChartInstance = null; 
+let ruleChartInstance = null;
 
 // load everything when page loads
 document.addEventListener('DOMContentLoaded', async (event) => {
-    await fetchExchangeRates();
 
-    // dark mode toggle
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️ Light Mode' : '🌙 Dark Mode';
-        });
-    }
+    // dom elements for tab switching
+    const goalsTab = document.getElementById('goals-tab');
+    const analysisTab = document.getElementById('analysis-tab');
+    const goalsView = document.getElementById('goals-view');
+    const analysisView = document.getElementById('analysis-view');
 
-    // currency selector change
-    document.getElementById('currencySelect').addEventListener('change', function(e) {
-        currentCurrency = e.target.value;
-        if (originalData.length > 0) {
-            processCSV([...originalData]); 
-        }
-    });
+    // goal form elements
+    const showGoalFormButton = document.getElementById('showGoalFormButton');
+    const goalCreationForm = document.getElementById('goalCreationForm');
+    const cancelGoalFormButton = document.getElementById('cancelGoalFormButton');
+    const newGoalForm = document.getElementById('newGoalForm'); 
+    
+    // goal input elements for fairy real-time projection
+    const targetAmountInput = document.getElementById('targetAmount');
+    const targetDateInput = document.getElementById('targetDate');
+    const currentSavedInput = document.getElementById('currentSaved');
+    const fairyProjectionDiv = document.getElementById('fairyProjection');
 
-    //fairy helper
-    const fairy = document.getElementById('fairy');
-    const fairyMessage = document.getElementById('fairyMessage');
+    // fairy helper widget logic
+    const fairy = document.getElementById('fairyHelper'); // TARGET THE CLICKABLE CONTAINER (fairyHelper)
+    const fairyMessageElement = document.getElementById('fairyMessage');
     const fairyBubble = document.querySelector('.fairy-message-bubble');
-
-    if (!fairy || !fairyMessage || !fairyBubble) return; 
-
-    const messages = [
-        "🌟 Try uploading a new CSV to see updated insights.",
-        "💡 Tip: You can filter your transactions by date!",
-        "✨ Did you know? You can export your filtered data as CSV.",
-        "💸 Keep an eye on your net balance for healthy finances!"
-        //add more messages?
-    ];
-    let messageIndex = 0;
-
-    fairy.addEventListener('click', () => {
-        fairyBubble.classList.add('visible');
-        fairyMessage.textContent = messages[messageIndex];
-        messageIndex = (messageIndex + 1) % messages.length;
-        setTimeout(() => {
-            fairyBubble.classList.remove('visible');
-        }, 5000);
-    });
-
-
+    
     // toggle between recent and all transactions
     document.getElementById('recentTransactions').addEventListener('click', function() {
         this.classList.add('active');
         document.getElementById('allTransactions').classList.remove('active');
         document.querySelector('.preview-table-section h2').textContent = 'Recent Transactions';
+        
         if (originalData.length > 0) {
             updateTransactionTable(originalData, true);
         }
@@ -94,8 +75,601 @@ document.addEventListener('DOMContentLoaded', async (event) => {
             }
         });
     });
-});
+    
+    // Function to switch views
+    function switchView(viewToShow) {
+        goalsView.classList.remove('visible');
+        goalsView.classList.add('hidden');
+        analysisView.classList.remove('visible');
+        analysisView.classList.add('hidden');
 
+        goalsTab.classList.remove('active');
+        analysisTab.classList.remove('active');
+
+        if (viewToShow === 'goals') {
+            goalsView.classList.remove('hidden');
+            goalsView.classList.add('visible');
+            goalsTab.classList.add('active');
+        } else if (viewToShow === 'analysis') {
+            analysisView.classList.remove('hidden');
+            analysisView.classList.add('visible');
+            analysisTab.classList.add('active');
+        }
+        if (spendingTrendChartInstance) {
+                spendingTrendChartInstance.resize();
+            }
+        if (ruleChartInstance) {
+            ruleChartInstance.resize();
+        }
+    }
+
+    // initial event listeners for tabs
+    goalsTab.addEventListener('click', () => {
+        switchView('goals');
+    });
+
+    analysisTab.addEventListener('click', () => {
+        switchView('analysis');
+    });
+
+    // dark mode toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️ Light Mode' : '🌙 Dark Mode';
+        });
+    }
+
+    // currency selector change
+    document.getElementById('currencySelect').addEventListener('change', function(e) {
+        currentCurrency = e.target.value;
+        if (originalData && originalData.length > 0) {
+            processCSV([...originalData]); 
+        }
+    });
+
+    // Define the contextual tips for the Analysis Tab
+    const analysisTips = [
+        "⭐ Wish Granted! Focus on categorizing transactions marked 'Unknown' first.",
+        "💡 Tip: Look for patterns! Assign similar names (e.g., Amazon) to the same category.",
+        "🔎 Need to track subscriptions? Create a specific category for 'Recurring' bills.",
+        "📊 Use the date filters above to analyze spending month-over-month for better insights.",
+    ];
+
+    // Define general, rotational tips (for other tabs)
+    const generalTips = [
+        "✨ Welcome! Start by clicking 'Create New Goal' to make a financial wish.",
+        "🔎 Need to check your spending? Click the 'Transaction Analysis' tab!",
+        "📤 Try uploading a new CSV to see updated insights.",
+        "💾 Did you know? You can export your filtered data as CSV.",
+        "💰 Keep an eye on your net balance for healthy finances!"
+    ];
+
+    let generalTipIndex = 0; // Starts at the first general tip
+    let analysisTipIndex = 0; // Starts at the first analysis tip
+
+
+    //Checks the active tab and provides a contextually relevant tip
+    function getContextualTip() {
+        const analysisTab = document.getElementById('analysis-tab');
+        let messageArray;
+        let tipIndex;
+
+        if (analysisTab && analysisTab.classList.contains('active')) {
+            messageArray = analysisTips;
+            tipIndex = analysisTipIndex;
+        } 
+        else {
+            messageArray = generalTips;
+            tipIndex = generalTipIndex;
+        }
+
+        // Get the current message
+        const message = messageArray[tipIndex];
+       
+        const nextIndex = (tipIndex + 1) % messageArray.length;
+
+        if (messageArray === analysisTips) {
+            analysisTipIndex = nextIndex;
+        } else {
+            generalTipIndex = nextIndex;
+        }
+        
+        return message;
+    }
+    if (fairy && fairyMessageElement && fairyBubble) { 
+    
+    // Set up the click handler for the fairy widget
+    fairy.addEventListener('click', () => {
+        
+        const message = getContextualTip(); 
+        
+        fairyMessageElement.textContent = message;
+        
+        fairyBubble.classList.add('show');
+        
+        setTimeout(() => {
+            fairyBubble.classList.remove('show');
+        }, 7500); 
+    });
+
+    
+    function calculateGoalMetrics(target, targetDateStr, saved) {
+        const today = new Date();
+        
+        if (!targetDateStr) {
+            return { monthlySavingsNeeded: null, monthsRemaining: null };
+        }
+
+        const targetDate = new Date(targetDateStr);
+
+        let monthsRemaining = (targetDate.getFullYear() - today.getFullYear()) * 12;
+        monthsRemaining -= today.getMonth();
+        monthsRemaining += targetDate.getMonth();
+        
+        monthsRemaining = Math.max(1, monthsRemaining); 
+
+        const amountLeftToSave = target - saved;
+        const monthlySavingsNeeded = amountLeftToSave > 0 ? (amountLeftToSave / monthsRemaining) : 0;
+
+        return {
+            monthlySavingsNeeded: parseFloat(monthlySavingsNeeded.toFixed(2)),
+            monthsRemaining: monthsRemaining
+        };
+    }
+
+    function getGoals() {
+        const goalsJson = localStorage.getItem('myFinFairyGoals');
+        return goalsJson ? JSON.parse(goalsJson) : [];
+    }
+
+    function saveGoal(newGoal) {
+        const goals = getGoals();
+        goals.push(newGoal);
+        localStorage.setItem('myFinFairyGoals', JSON.stringify(goals));
+    }
+    
+    function deleteGoal(idToDelete) {
+        let goals = getGoals();
+        goals = goals.filter(goal => goal.id !== idToDelete);
+        localStorage.setItem('myFinFairyGoals', JSON.stringify(goals));
+        renderGoals(); 
+    }
+
+    function contributeToGoal(idToUpdate, amount) {
+        let goals = getGoals();
+        const goalIndex = goals.findIndex(goal => goal.id === idToUpdate);
+        
+        if (goalIndex !== -1) {
+            goals[goalIndex].saved += amount;
+            goals[goalIndex].saved = Math.min(goals[goalIndex].saved, goals[goalIndex].target);
+            localStorage.setItem('myFinFairyGoals', JSON.stringify(goals));
+            renderGoals(); 
+        }
+    }
+
+    /**
+     * Updates an existing goal with new data
+     * @param {object} updatedGoal 
+     */
+    function updateGoal(updatedGoal) {
+        let goals = getGoals();
+        const goalIndex = goals.findIndex(goal => goal.id === updatedGoal.id);
+        
+        if (goalIndex !== -1) {
+            const originalGoal = goals[goalIndex];
+            
+            goals[goalIndex] = {
+                ...originalGoal, 
+                ...updatedGoal, 
+                // Recalculate metrics based on potentially new target/date
+                ...calculateGoalMetrics(updatedGoal.target, updatedGoal.targetDate, updatedGoal.saved) 
+            };
+            
+            localStorage.setItem('myFinFairyGoals', JSON.stringify(goals));
+        }
+    }
+
+    /**
+     * Loads existing goal data into the creation form for editing
+     * @param {number} goalId 
+     */
+    function loadGoalForEditing(goalId) {
+        const goals = getGoals();
+        const goalToEdit = goals.find(goal => goal.id === goalId);
+        
+        if (goalToEdit) {
+            currentlyEditingGoalId = goalId;
+
+            document.getElementById('goalName').value = goalToEdit.name;
+            document.getElementById('targetAmount').value = goalToEdit.target;
+            document.getElementById('targetDate').value = goalToEdit.targetDate || '';
+            document.getElementById('currentSaved').value = goalToEdit.saved;
+
+            document.querySelector('#newGoalForm button[type="submit"]').textContent = 'Update Goal';
+
+            document.getElementById('goalCreationForm').classList.remove('hidden');
+            document.getElementById('showGoalFormButton').classList.add('hidden');
+            
+            updateFairyProjection();
+        }
+    }
+    
+    //Provides real-time feedback on monthly savings required.   
+    function updateFairyProjection() {
+        const targetAmount = parseFloat(targetAmountInput.value);
+        const targetDateStr = targetDateInput.value;
+        const currentSaved = parseFloat(currentSavedInput.value) || 0;
+
+        if (!targetAmount || targetAmount <= 0) {
+            fairyProjectionDiv.innerHTML = "🧚‍♀️ Enter a **Target Amount** and a **Target Date** to see your monthly savings plan!";
+            return; 
+        }
+        
+        if (!targetDateStr) {
+            fairyProjectionDiv.innerHTML = "🧚‍♀️ Select a **Target Date** to calculate the monthly amount needed.";
+            return;
+        }
+
+        const metrics = calculateGoalMetrics(targetAmount, targetDateStr, currentSaved);
+        const monthlySaving = metrics.monthlySavingsNeeded;
+        const months = metrics.monthsRemaining;
+
+        if (monthlySaving !== null && monthlySaving > 0) {
+            fairyProjectionDiv.innerHTML = `
+                🧚‍♀️ To reach your goal of **$${targetAmount.toFixed(2)}** in **${months} months**, 
+                you need to save **$${monthlySaving.toFixed(2)}** per month!
+            `;
+        } else if (monthlySaving === 0 && targetAmount > 0) {
+            fairyProjectionDiv.innerHTML = "✨ You've already reached or exceeded your target! No further savings needed.";
+        } else {
+            fairyProjectionDiv.innerHTML = "🤔 Please select a future date to begin saving.";
+        }
+    }
+    
+    //Renders all active goals and attaches all card-level event listeners
+    function renderGoals() {
+        const activeGoalsList = document.getElementById('activeGoalsList');
+        const goals = getGoals();
+
+        activeGoalsList.innerHTML = '<h3>My Active Goals</h3>'; 
+        
+        if (goals.length === 0) {
+            activeGoalsList.innerHTML += '<p class="placeholder-text">You haven\'t set any goals yet. Click "Create New Goal" above!</p>';
+            return;
+        }
+
+        goals.forEach(goal => {
+            const percentComplete = Math.min(100, (goal.saved / goal.target) * 100).toFixed(1);
+            const status = goal.saved >= goal.target ? 'Completed' : 'Active';
+            const statusClass = status === 'Completed' ? 'goal-status-complete' : 'goal-status-active';
+            
+            const monthlyNeedDisplay = goal.monthlySavingsNeeded 
+                ? `$${goal.monthlySavingsNeeded.toFixed(2)}` 
+                : 'N/A';
+            
+            const goalCardHtml = `
+                <div class="goal-card" data-goal-id="${goal.id}">
+                    <h4>${goal.name}</h4>
+                    <span class="status-badge ${statusClass}">${status}</span>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${percentComplete}%;"></div>
+                    </div>
+                    
+                    <p><strong>${percentComplete}% Complete</strong></p>
+                    <p>Saved: $${goal.saved.toFixed(2)} / Target: $${goal.target.toFixed(2)}</p>
+                    
+                    <p class="projection-info">
+                        Monthly Need: <strong>${monthlyNeedDisplay}</strong>
+                        ${goal.targetDate ? `(Finish by: ${goal.targetDate})` : ''}
+                    </p>
+                    
+                    <button class="contribute-button">Contribute</button>
+                    <button class="edit-button">Edit</button>
+                    <button class="delete-button">Delete</button>
+                </div>
+            `;
+            activeGoalsList.innerHTML += goalCardHtml;
+        });
+        
+        // Delete Listener
+        document.querySelectorAll('.delete-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const goalId = parseInt(e.target.closest('.goal-card').dataset.goalId);
+                if (confirm('Are you sure you want to delete this goal?')) {
+                    deleteGoal(goalId);
+                }
+            });
+        });
+
+        // Contribute Listener
+        document.querySelectorAll('.contribute-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+        
+        const clickedButton = e.currentTarget;
+        const goalCardElement = e.target.closest('.goal-card'); 
+
+        if (!goalCardElement) {
+            console.error("Contribute button clicked outside a .goal-card element.");
+            return;
+        }
+
+        const goalId = parseInt(goalCardElement.dataset.goalId); 
+        
+        const contributionAmountStr = prompt('Enter the amount to contribute:');
+        const contributionAmount = parseFloat(contributionAmountStr);
+        
+        if (contributionAmount > 0) {
+            contributeToGoal(goalId, contributionAmount); 
+        } else if (contributionAmountStr !== null && contributionAmountStr.trim() !== "") {
+            alert('Please enter a positive number.');
+        }
+    });
+});
+        
+        document.querySelectorAll('.edit-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const goalId = parseInt(e.target.closest('.goal-card').dataset.goalId);
+                loadGoalForEditing(goalId);
+            });
+        });
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Logic to show the form
+    showGoalFormButton.addEventListener('click', () => {
+        // Reset form state to "Create New Goal" mode
+        currentlyEditingGoalId = null;
+        newGoalForm.reset();
+        document.querySelector('#newGoalForm button[type="submit"]').textContent = 'Save Goal';
+
+        goalCreationForm.classList.remove('hidden');
+        showGoalFormButton.classList.add('hidden');
+        updateFairyProjection(); 
+    });
+
+    // Logic to hide the form
+    cancelGoalFormButton.addEventListener('click', () => {
+        // Reset global state and button text
+        currentlyEditingGoalId = null;
+        document.querySelector('#newGoalForm button[type="submit"]').textContent = 'Save Goal'; 
+
+        goalCreationForm.classList.add('hidden');
+        showGoalFormButton.classList.remove('hidden');
+        document.getElementById('newGoalForm').reset();
+    });
+    
+    // Real-time projection listeners on form inputs
+    if (targetAmountInput && targetDateInput && currentSavedInput) {
+        targetAmountInput.addEventListener('input', updateFairyProjection);
+        targetDateInput.addEventListener('change', updateFairyProjection);
+        currentSavedInput.addEventListener('input', updateFairyProjection);
+    }
+    
+    // Goal Submission Handler 
+    newGoalForm.addEventListener('submit', (event) => {
+        event.preventDefault(); 
+
+        const goalName = document.getElementById('goalName').value;
+        const targetAmount = parseFloat(document.getElementById('targetAmount').value);
+        const targetDateStr = document.getElementById('targetDate').value;
+        const currentSaved = parseFloat(document.getElementById('currentSaved').value) || 0;
+
+        if (!goalName || targetAmount <= 0) {
+            alert("Please enter a valid Goal Name and Target Amount.");
+            return;
+        }
+
+        const goalMetrics = calculateGoalMetrics(targetAmount, targetDateStr, currentSaved);
+
+        const goalData = {
+            name: goalName,
+            target: targetAmount,
+            saved: currentSaved,
+            targetDate: targetDateStr,
+            monthlySavingsNeeded: goalMetrics.monthlySavingsNeeded,
+            monthsRemaining: goalMetrics.monthsRemaining
+        };
+
+        if (currentlyEditingGoalId) {
+            // edit logic
+            updateGoal({ 
+                ...goalData,
+                id: currentlyEditingGoalId 
+            });
+        } else {
+            // create logic
+            const newGoal = {
+                ...goalData,
+                id: Date.now(), 
+                dateCreated: new Date().toISOString().split('T')[0],
+            };
+            saveGoal(newGoal);
+        }
+
+        renderGoals(); 
+        
+        // Clear and close the form via the cancel button's logic
+        document.getElementById('cancelGoalFormButton').click(); 
+    });
+    // -----------------------------------------------------------------------------------
+
+    //final intializer calls
+    renderGoals(); 
+    switchView('goals'); 
+
+    document.addEventListener('DOMContentLoaded', async (event) => {
+
+    // dom element references
+    const goalsTab = document.getElementById('goals-tab');
+    const analysisTab = document.getElementById('analysis-tab');
+    const goalsView = document.getElementById('goals-view');
+    const analysisView = document.getElementById('analysis-view');
+    
+    // new anlysis button
+    const runAnalysisButton = document.getElementById('runAnalysisButton'); // Reference the new button
+    
+    // initial event listeners
+    
+    if (runAnalysisButton) {
+        runAnalysisButton.addEventListener('click', runFullFinancialAnalysis); // Connects to function in B.1
+    }
+
+    analysisTab.addEventListener('click', () => {
+        switchView('analysis');
+        runFullFinancialAnalysis(); // Run analysis on tab switch
+    });
+        });
+    };
+
+    document.getElementById('csvFile').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const widgetResult = document.getElementById('widgetResult');
+        if (widgetResult) {
+            widgetResult.style.display = 'none';
+        }
+
+        try {
+            const response = await fetch('categories.json');
+            categories = await response.json();
+            //use papa parse to read csv
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (!validateCSV(results.data)) {
+                        showError("Invalid CSV format. Please ensure your file has Date, Description, and Amount columns.");
+                        return;
+                    }
+                    
+                    // clear previous data
+                    originalData = [];
+                    if (window.pieChartInstance) {
+                        window.pieChartInstance.destroy();
+                    }
+                    
+                    originalData = results.data.map(row => ({
+                        ...row,
+                        Date: new Date(row.Date),
+                        Amount: parseFloat(row.Amount)
+                    }));
+                    
+                    processCSV(originalData);
+                    
+                    // reset file input for uploading different files
+                    e.target.value = '';
+                },
+                error: function(err) {
+                    showError("Error parsing CSV file: " + err.message);
+                    e.target.value = '';
+                }
+            });     
+        } catch (error) {
+            showError("Error loading categories: " + error.message);
+            e.target.value = '';
+        }
+
+        const resetButton = document.getElementById('resetButton'); //add button to reset charts without needing to refresh
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            resetPage();
+        });
+    }
+
+    //currency selector change
+    document.getElementById('currencySelect').addEventListener('change', function(e) {
+        currentCurrency = e.target.value;
+        if (originalData.length > 0) {
+            processCSV(originalData);
+        }
+    });
+
+    // show all transactions widget
+    const transactionWidget = document.getElementById('transactionWidget');
+    if (transactionWidget) {
+        transactionWidget.addEventListener('click', function() {
+            const total = Array.isArray(originalData) ? originalData.length : 0;
+            const resultDiv = document.getElementById('widgetResult');
+            resultDiv.textContent = `Total Transactions: ${total}`;
+            resultDiv.style.display = 'block';
+        });
+    }
+    //filter by date range button
+    document.getElementById('applyFilter').addEventListener('click', function() {
+        const startDate = new Date(document.getElementById('startDate').value);
+        const endDate = new Date(document.getElementById('endDate').value);
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            showError('Please select both start and end dates');
+            return;
+        }
+
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+
+        const filteredData = originalData.filter(d => {
+            const transactionDate = new Date(d.Date);
+            return transactionDate >= startDate && transactionDate <= endDate;
+        });
+
+        if (filteredData.length === 0) {
+            showError('No transactions found in the selected date range');
+            return;
+        }
+
+        processCSV(filteredData);
+    });
+
+    //export filtered data as csv
+    document.getElementById('exportCSV').addEventListener('click', function() {
+        let dataToExport = [];
+        const tableRows = document.querySelectorAll('#previewTable tbody tr');
+        if (tableRows.length > 0) {
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                dataToExport.push({
+                    Date: cells[0].textContent,
+                    Description: cells[1].textContent,
+                    Amount: cells[2].textContent,
+                    Category: cells[3].textContent
+                });
+            });
+        } else {
+            dataToExport = originalData;
+        }
+
+        if (dataToExport.length === 0) {
+            showError("No data to export!");
+            return;
+        }
+
+        // csv conversion
+        const csvRows = [];
+        const headers = ['Date', 'Description', 'Amount', 'Category'];
+        csvRows.push(headers.join(','));
+        dataToExport.forEach(row => {
+            const values = headers.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`);
+            csvRows.push(values.join(','));
+        });
+        const csvString = csvRows.join('\n');
+
+        //download
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'filtered_transactions.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+            });
+        });
+
+    });
 
 
 //colour coded categories for pie chart
@@ -113,144 +687,7 @@ const categoryColors = {
     "Other": "#C9CBCF"           
 };
 
-// load keywords from json file
-document.getElementById('csvFile').addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const widgetResult = document.getElementById('widgetResult');
-    if (widgetResult) {
-        widgetResult.style.display = 'none';
-    }
-
-    try {
-        const response = await fetch('categories.json');
-        categories = await response.json();
-        //use papa parse to read csv
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                if (!validateCSV(results.data)) {
-                    showError("Invalid CSV format. Please ensure your file has Date, Description, and Amount columns.");
-                    return;
-                }
-                
-                // clear previous data
-                originalData = [];
-                if (window.pieChartInstance) {
-                    window.pieChartInstance.destroy();
-                }
-                
-                originalData = results.data.map(row => ({
-                    ...row,
-                    Date: new Date(row.Date),
-                    Amount: parseFloat(row.Amount)
-                }));
-                
-                processCSV(originalData);
-                
-                // reset file input for uploading different files
-                e.target.value = '';
-            },
-            error: function(err) {
-                showError("Error parsing CSV file: " + err.message);
-                e.target.value = '';
-            }
-        });
-    } catch (error) {
-        showError("Error loading categories: " + error.message);
-        e.target.value = '';
-    }
-    const resetButton = document.getElementById('resetButton'); //add button to reset charts without needing to refresh
-if (resetButton) {
-    resetButton.addEventListener('click', () => {
-        resetPage();
-    });
-}
-
-
-// show all transactions widget
-const transactionWidget = document.getElementById('transactionWidget');
-if (transactionWidget) {
-    transactionWidget.addEventListener('click', function() {
-        const total = Array.isArray(originalData) ? originalData.length : 0;
-        const resultDiv = document.getElementById('widgetResult');
-        resultDiv.textContent = `Total Transactions: ${total}`;
-        resultDiv.style.display = 'block';
-    });
-}
-document.getElementById('exportCSV').addEventListener('click', function() {
-    let dataToExport = [];
-    const tableRows = document.querySelectorAll('#previewTable tbody tr');
-    if (tableRows.length > 0) {
-        tableRows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            dataToExport.push({
-                Date: cells[0].textContent,
-                Description: cells[1].textContent,
-                Amount: cells[2].textContent,
-                Category: cells[3].textContent
-            });
-        });
-    } else {
-        dataToExport = originalData;
-    }
-
-    if (dataToExport.length === 0) {
-        showError("No data to export!");
-        return;
-    }
-
-    // csv conversion
-    const csvRows = [];
-    const headers = ['Date', 'Description', 'Amount', 'Category'];
-    csvRows.push(headers.join(','));
-    dataToExport.forEach(row => {
-        const values = headers.map(h => `"${(row[h] || '').replace(/"/g, '""')}"`);
-        csvRows.push(values.join(','));
-    });
-    const csvString = csvRows.join('\n');
-
-    //download
-    const blob = new Blob([csvString], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'filtered_transactions.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-});
-});
-
-//filter by date range button
-document.getElementById('applyFilter').addEventListener('click', function() {
-    const startDate = new Date(document.getElementById('startDate').value);
-    const endDate = new Date(document.getElementById('endDate').value);
-    
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        showError('Please select both start and end dates');
-        return;
-    }
-
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
-
-    const filteredData = originalData.filter(d => {
-        const transactionDate = new Date(d.Date);
-        return transactionDate >= startDate && transactionDate <= endDate;
-    });
-
-    if (filteredData.length === 0) {
-        showError('No transactions found in the selected date range');
-        return;
-    }
-
-    processCSV(filteredData);
-});
-
-// processes csv data and shows charts+everythign
+// processes csv data and shows charts+everything
 function processCSV(data) {
     
     currentSort = { column: 'Date', direction: 'desc' };
@@ -352,6 +789,10 @@ if (previewTableSection) {
 if (trendData) {
     renderTrendChart(trendData);
 }
+
+document.querySelector('.summary-cards').style.display = 'grid';
+document.querySelector('.charts-section').style.display = 'grid';
+document.querySelector('.preview-table-section').style.display = 'block';
 }
 
 //shortcut to reset page
@@ -361,15 +802,6 @@ document.addEventListener('keydown', function(event) {
     }
 
 });
-
-document.getElementById('currencySelect').addEventListener('change', function(e) {
-    currentCurrency = e.target.value;
-    if (originalData.length > 0) {
-        processCSV(originalData);
-    }
-});
-
-
 //function to add tips and insights based on spending trends
 function analyzeSpendingTrends(data) {
     const monthlyTotals = {};
@@ -428,21 +860,10 @@ function analyzeSpendingTrends(data) {
 }
 
 
-let messageIndex = 0;
-
-fairy.addEventListener('click', () => {
-
-    fairyBubble.classList.add('visible');
-    fairyMessage.textContent = messages[messageIndex];
-    messageIndex = (messageIndex + 1) % messages.length;
-
-    setTimeout(() => {
-        fairyBubble.classList.remove('visible');
-    }, 5000);
-});
 //function to make chart
 function renderTrendChart(chartData) {
     const ctx = document.getElementById('spendingTrendChart').getContext('2d');
+    
     // clear old chart if exists
     if (window.spendingTrendChartInstance) {
         window.spendingTrendChartInstance.destroy(); 
@@ -557,6 +978,128 @@ function updateTransactionTable(data, recentOnly) {
     });
 }
 
+
+// Define categories for 50/30/20 rule (in progress)
+const ruleCategories = {
+    Needs: ['Rent', 'Utilities', 'Groceries', 'Debt_Minimum'],
+    Wants: ['DiningOut', 'Entertainment', 'Shopping', 'Subscriptions'],
+    Savings: ['Investment', 'Retirement', 'Goal_Contribution', 'Extra_Debt'],
+};
+
+/**
+ * Calculate the spending breakdown based on 50/30/20 rule
+ * @param {Array} data 
+ */
+function calculate503020(data) {
+    let totals = { Needs: 0, Wants: 0, Savings: 0, TotalSpending: 0 };
+
+    data.forEach(transaction => {
+        // Only analyze expenses (negative amounts)
+        if (transaction.Amount < 0) {
+            const amount = Math.abs(transaction.Amount);
+            let assigned = false;
+
+            for (const bucket in ruleCategories) {
+                if (ruleCategories[bucket].includes(transaction.Category)) {
+                    totals[bucket] += amount;
+                    assigned = true;
+                    break;
+                }
+            }
+            if (assigned) {
+                totals.TotalSpending += amount;
+            }
+        }
+    });
+    return totals;
+}
+
+/**
+ * Renders the Donot Chart and provides fairy feedback.
+ * @param {Object} totals 
+ */
+function render503020Chart(totals) {
+    const ctx = document.getElementById('ruleChart').getContext('2d');
+    const feedbackDiv = document.getElementById('healthFairyFeedback');
+    
+    const spendingData = [totals.Needs, totals.Wants, totals.Savings];
+    const totalSpent = totals.TotalSpending;
+
+    if (totalSpent === 0) {
+        if (ruleChartInstance) ruleChartInstance.destroy();
+        feedbackDiv.innerHTML = "🧚‍♀️ No expenses found in the current filter range to analyze your 50/30/20 split.";
+        return;
+    }
+    
+    const percentages = spendingData.map(val => ((val / totalSpent) * 100).toFixed(1));
+    const dataLabels = [`Needs (${percentages[0]}%)`, `Wants (${percentages[1]}%)`, `Savings (${percentages[2]}%)`];
+
+    // Destroy old instance if it exists
+    if (window.ruleChartInstance) {
+        window.ruleChartInstance.destroy();
+    }
+
+    window.ruleChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: dataLabels,
+            datasets: [{
+                data: spendingData,
+                backgroundColor: [
+                    '#00b894', //(needs)
+                    '#ff7979', //(wants)
+                    '#5f27cd'  //(savings)
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            aspectRatio: 1, // Ensures it's circular/square
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Spending Breakdown by Financial Rule'
+                }
+            }
+        }
+    });
+
+    // Provide Fairy Feedback
+    let feedback = `Your spending is currently split: ${percentages[0]}% Needs, ${percentages[1]}% Wants, ${percentages[2]}% Savings.`;
+    
+    if (parseFloat(percentages[1]) > 35) {
+        feedback += " The Fairy sees a little too much magic in the 'Wants' category! Try contributing more to goals.";
+    } else if (parseFloat(percentages[2]) < 20) {
+        feedback += " You're close! Aim to allocate a little more to the 'Savings' category to meet that 20% goal.";
+    } else {
+        feedback += " ✨ Your Financial Magic is balanced! Keep up the excellent work!";
+    }
+
+    feedbackDiv.innerHTML = `**${feedback}**`;
+}
+
+// analysis logic (B)
+function runFullFinancialAnalysis() {
+    let filteredData = window.originalData || []; 
+    
+    if (filteredData.length === 0) {
+        document.getElementById('healthFairyFeedback').innerHTML = 
+            "⚠️ Please upload transaction data first to run the analysis.";
+        if (window.ruleChartInstance) {
+            window.ruleChartInstance.destroy();
+        }
+        return;
+    }
+
+    const analysisTotals = calculate503020(filteredData);
+
+    render503020Chart(analysisTotals);
+}
+
 function resetPage() {
     // reset data
     originalData = [];
@@ -617,7 +1160,7 @@ function resetPage() {
 }
 }
 
-
+//curency exchange logic 
 async function fetchExchangeRates() {
     const API_KEY = '8d2cdf7ff1da23853045b0ef';
     try {
@@ -781,7 +1324,7 @@ function analyzeSpendingTrends(data) {
     };
 }
 
-// creates bar and line chart for spending trends
+//render trend chart
 function renderTrendChart(chartData) {
     const ctx = document.getElementById('spendingTrendChart').getContext('2d');
     // clear old chart if exists
@@ -852,5 +1395,5 @@ function renderTrendChart(chartData) {
                 }
             }
         }
-    });
-}
+    }); 
+} 

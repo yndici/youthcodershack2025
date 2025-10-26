@@ -56,6 +56,9 @@ p {
 .upload-label:hover, #applyFilter:hover, #resetButton:hover {
     background: linear-gradient(90deg, #00b894 60%, #5f27cd 100%);
     box-shadow: 0 4px 16px rgba(95,39,205,0.13);
+    
+    animation: fairy-flash 0.5s ease-out 1 !important; 
+
 }
 
 #csvFile {
@@ -67,12 +70,17 @@ p {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 12px;
+    gap: 12px;.health-summary {
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto; 
+    width: 100%;
+}
 }
 
 /* Summary cards */
 .summary-cards {
-    display: flex;
+    display: flex !important;
     flex-wrap: wrap;
     gap: 20px;
     max-width: 1200px;
@@ -110,7 +118,9 @@ p {
 }
 @media (max-width: 768px) {
     .summary-cards {
+        display: flex;
         flex-direction: column;
+        justify-content: center;
         align-items: center;
         gap: 15px;
         padding: 0 15px;
@@ -161,10 +171,10 @@ p {
 }
 
 .chart-box canvas {
-    max-width: 100%;
     max-height: 360px;
-    height: 360px !important; 
-    width: 100% !important;  
+    width: 800px !important;
+    max-width: 100% !important;
+    height: auto !important;
 }
 
 /* Table styles */
@@ -249,31 +259,6 @@ tr:nth-child(even) td {
     font-size: 1.08rem;
 }
 
-/* Responsive design */
-@media (max-width: 900px) {
-    .container {
-        padding: 1rem;
-        border-radius: 8px;
-    }
-    .charts-section {
-        flex-direction: column;
-        gap: 16px;
-    }
-    .chart-box {
-        min-width: 0;
-        height: 320px;
-        padding: 12px;
-        max-width: 700px;
-        width: 100%;
-    }
-    .summary-cards {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .side-widget {
-        display: none;
-    }
-}
 
 .side-widget {
     position: fixed;
@@ -350,6 +335,7 @@ tr:nth-child(even) td {
 #exportCSV:hover {
     background: linear-gradient(90deg, #5f27cd 60%, #00b894 100%);
     box-shadow: 0 4px 16px rgba(95,39,205,0.13);
+    animation: fairy-flash 0.5s ease-out 1 !important;
 }
 
 .upload-widget {
@@ -474,9 +460,10 @@ tr:nth-child(even) td {
     z-index: 10;
 }
 
-.fairy-message-bubble.visible {
+.fairy-message-bubble.show {
     opacity: 1;
 }
+
 
 body.dark-mode {
     background: #232946;
@@ -493,9 +480,13 @@ body.dark-mode .table-container {
     background: #232946 !important;
     color: #ffe0fa !important;
     border-color: #393e5c !important;
-    box-shadow: 0 4px 18px rgba(20,20,40,0.25);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5),
+        0 0 15px rgba(199, 125, 255, 0.4);
+    
 }
-
+body.dark-mode p {
+    color: #ffffff !important; 
+}
 body.dark-mode table {
     background: #232946 !important;
     color: #ffe0fa !important;
@@ -596,25 +587,26 @@ body.dark-mode #exportCSV:hover {
     color: #fff !important;
     border-color: #ffe0fa !important;
     box-shadow: 0 6px 24px rgba(199,125,255,0.18);
+    animation: fairy-flash 0.5s ease-out 1 !important;
 }
 
 .side-widget,
 .side-widget #widgetLabel,
 .side-widget #widgetResult {
-    color: #5f27cd !important; /* dark purple */
+    color: #5f27cd !important; 
 }
 
 .charts-section,
 .chart-box {
     background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%);
-    color: #5f27cd !important; /* dark purple */
+    color: #5f27cd !important; 
 }
 
-/* Dark mode: same light purple background, light purple text */
+/* Dark mode*/
 body.dark-mode .charts-section,
 body.dark-mode .chart-box {
     background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%) !important;
-    color: #c77dff !important; /* light purple */
+    color: #c77dff !important;
     border-color: #c77dff !important;
 }
 body.dark-mode h1 {
@@ -630,4 +622,669 @@ body.dark-mode h1 {
 
 #previewTable th:hover {
     background-color: rgba(95, 39, 205, 0.1);
+}
+
+/*Main control panel*/
+.content-panel {
+    padding: 20px;
+}
+
+.hidden {
+    /* hiding content */
+    display: none; 
+}
+
+.visible {
+    display: block;
+}
+
+
+/* --- Main Navigation Bar Styling --- */
+
+.main-nav {
+    display: flex;
+    justify-content: center; 
+    gap: 1px; 
+    margin: 0 auto 30px auto;
+    border-radius: 10px;
+    /* Use a light border/background to frame the toggles */
+    background-color: #f8fafc; 
+    border: 1px solid #e0e7ff; 
+    overflow: hidden; 
+    max-width: 450px;
+}
+
+.main-nav button {
+    flex-grow: 1;
+    padding: 12px 25px;
+    border: none;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    background-color: transparent; 
+    color: #5f27cd; 
+    
+    /* Ensure only the active button shows the border*/
+    border-bottom: 3px solid transparent; 
+}
+
+/* Hover state for inactive tabs */
+.main-nav button:not(.active):hover {
+    background-color: #e0e7ff; /* Light purple/blue hover */
+    color: #22223b;
+}
+
+/* Active Tab Styling */
+.main-nav button.active {
+    background: linear-gradient(135deg, #5f27cd 10%, #c77dff 100%);
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(95,39,205,0.2);
+    border-bottom: 3px solid #5f27cd; 
+}
+
+
+body.dark-mode .main-nav {
+    background-color: #393e5c;
+    border: 1px solid #c77dff;
+}
+
+body.dark-mode .main-nav button {
+    color: #c77dff;
+}
+
+body.dark-mode .main-nav button:not(.active):hover {
+    background-color: #282b4a; /* Darker hover */
+    color: #ffe0fa;
+}
+
+body.dark-mode .main-nav button.active {
+    /* Use dark mode gradient */
+    background: linear-gradient(135deg, #c77dff 10%, #393e5c 100%);
+    color: #22223b;
+    border-bottom: 3px solid #c77dff;
+}
+
+/* --- Goal Form --- */
+
+.content-panel.hidden {
+    display: none !important;
+}
+.content-panel.visible {
+    display: block !important;
+}
+
+/* Base style for the goal form section */
+.goal-form {
+    background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%); 
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(95,39,205,0.07); 
+    margin-bottom: 30px;
+}
+body.dark-mode .goal-form {
+    background: #232946 !important;
+    box-shadow: 0 4px 18px rgba(20,20,40,0.25);
+}
+
+/* input fields and labels */
+.goal-form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #5f27cd;
+}
+body.dark-mode .goal-form label {
+    color: #ffe0fa;
+}
+
+.goal-form input[type="text"],
+.goal-form input[type="number"],
+.goal-form input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #e0e7ff;
+    border-radius: 5px;
+    box-sizing: border-box; 
+    color: #22223b;
+}
+body.dark-mode .goal-form input[type="text"],
+body.dark-mode .goal-form input[type="number"],
+body.dark-mode .goal-form input[type="date"] {
+    background-color: #393e5c !important;
+    color: #ffe0fa;
+    border-color: #c77dff;
+}
+
+/* Fairy Projection Message */
+.projection-message {
+    margin: 15px 0;
+    padding: 10px;
+    border: 1px dashed #5f27cd; 
+    border-radius: 5px;
+    background-color: rgba(60, 179, 113, 0.1); 
+    color: var(--text-color);
+    font-style: italic;
+    font-size: 0.9em;
+}
+body.dark-mode .projection-message {
+    background-color: #393e5c;
+    border-color: #c77dff;
+    color: #ffe0fa;
+}
+
+/* --- Buttons --- */
+
+.primary-button, .save-button, .cancel-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background-color 0.2s;
+}
+
+.primary-button { /* "Create New Goal" button */
+    background: linear-gradient(90deg, #5f27cd 60%, #00b894 100%);
+    color: white;
+    width: 100%;
+    font-size: 1.1em;
+    margin-bottom: 20px;
+}
+
+.save-button {
+    background: linear-gradient(90deg, #5f27cd 60%, #00b894 100%);
+    color: white;
+    margin-right: 10px;
+}
+
+.cancel-button {
+    background-color: #e0e7ff; 
+    color: #5f27cd;
+}
+.primary-button:hover, .save-button:hover {
+    background: linear-gradient(90deg, #00b894 60%, #5f27cd 100%);
+    box-shadow: 0 4px 16px rgba(95,39,205,0.13);
+
+    animation: fairy-flash 0.5s ease-out 1; 
+}
+.cancel-button:hover {
+    background-color: #c7d2e9;
+}
+/* Dark Mode Button Overrides */
+body.dark-mode .primary-button,
+body.dark-mode .save-button {
+    background: linear-gradient(90deg, #393e5c 60%, #c77dff 100%) !important;
+    color: #ffe0fa !important;
+}
+body.dark-mode .primary-button:hover,
+body.dark-mode .save-button:hover {
+    background: linear-gradient(90deg, #c77dff 60%, #393e5c 100%) !important;
+    color: #fff !important;
+}
+body.dark-mode .cancel-button {
+    background: #393e5c !important;
+    color: #c77dff !important;
+}
+body.dark-mode .cancel-button:hover {
+    background: #4a4f78 !important;
+}
+
+
+/* --- Goal Card Styling --- */
+
+#activeGoalsList {
+    margin-top: 20px;
+}
+
+.goal-card {
+    background: linear-gradient(120deg, #e0e7ff 60%, #fafafa 100%); 
+    border: 1px solid #e0e7ff;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(95,39,205,0.05);
+    position: relative;
+}
+body.dark-mode .goal-card {
+    background: #232946 !important;
+    border: 1px solid #393e5c;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5),
+        0 0 15px rgba(199, 125, 255, 0.4);
+    
+}
+
+.goal-card h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.25em;
+    color: #5f27cd;
+}
+body.dark-mode .goal-card h4 {
+    color: #c77dff;
+}
+
+.status-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.goal-status-complete {
+    background-color: #00b894; 
+    color: white;
+}
+.goal-status-active {
+    background-color: #ffc107; 
+    color: #333;
+}
+body.dark-mode .goal-status-complete {
+    background-color: #00b894; 
+}
+body.dark-mode .goal-status-active {
+    background-color: #ffc107;
+    color: #22223b;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    margin: 10px 0;
+    height: 15px;
+    overflow: hidden;
+}
+
+@keyframes shimmer {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 40px 40px; 
+    }
+}
+body.dark-mode .progress-bar-container {
+    background-color: #393e5c;
+}
+
+.progress-bar {
+    height: 15px;
+    background-color: #5f27cd;
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+}
+body.dark-mode .progress-bar {
+    background-color: #c77dff;
+}
+
+.projection-info {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 10px;
+}
+body.dark-mode .projection-info {
+    color: #c77dff;
+}
+
+/* Contribution/Delete Buttons */
+.contribute-button, .delete-button{
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-right: 8px;
+    margin-top: 10px;
+    transition: opacity 0.2s;
+}
+
+.contribute-button {
+    background-color: #00b894; 
+    color: white;
+}
+.delete-button {
+    background-color: #b71c1c; 
+    color: white;
+}
+.contribute-button:hover, .delete-button:hover {
+    opacity: 0.85;
+}
+
+/* Dark Mode Button Overrides */
+body.dark-mode .contribute-button {
+    background-color: #00b894;
+    color: #22223b;
+}
+body.dark-mode .edit-button {
+    background-color: #ff9800;
+    color: #22223b;
+}
+body.dark-mode .delete-button {
+    background-color: #e56060; 
+    color: #22223b;
+}
+
+/* Placeholder text */
+.placeholder-text {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+    border: 1px dashed #c7d2e9; 
+    border-radius: 8px;
+    margin-top: 20px;
+}
+body.dark-mode .placeholder-text {
+    border-color: #393e5c;
+    color: #c77dff;
+}
+
+.edit-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-right: 8px;
+    margin-top: 10px;
+    background-color: #ff9800; 
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.edit-button:hover {
+    opacity: 0.85;
+}
+
+/*Glow Feature*/
+.goal-form input:focus,
+.date-filter input:focus,
+.currency-select:focus {
+    outline: none; 
+ 
+    box-shadow: 0 0 0 5px rgba(95, 39, 205, 0.4);
+    border-color: #5f27cd;
+}
+
+/* Dark Mode Adjustment for Glow */
+body.dark-mode .goal-form input:focus,
+body.dark-mode .date-filter input:focus,
+body.dark-mode .currency-select:focus {
+    /* Use Light Purple glow in dark mode */
+    box-shadow: 0 0 0 5px rgba(231, 214, 245, 0.4); 
+    border-color: #c77dff; 
+}
+
+@keyframes fairy-flash {
+    0% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+    50% { transform: scale(1.01); box-shadow: 0 0 10px rgba(199, 125, 255, 0.8); } 
+    100% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+}
+
+/*background sphere animation*/
+.animated-background-sphere {
+    position: fixed;
+    top: -50vh;
+    left: -50vw;
+    width: 150vh;
+    height: 150vh;
+    border-radius: 50%;
+    z-index: -1;
+    
+    background: radial-gradient(circle at 50% 50%, #5f27cd 0%, transparent 60%);
+    opacity: 0.45;
+    
+    filter: blur(150px); 
+    
+    box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.4); 
+    
+    animation: moveSphere 25s infinite alternate ease-in-out;
+}
+.sphere-2 {
+    background: radial-gradient(circle at 50% 50%, #00b894 0%, transparent 55%); 
+    animation-duration: 30s;
+    top: 50vh;
+    left: 60vw;
+    opacity: 0.8; 
+    
+   
+    filter: blur(200px); 
+    
+
+    box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.4); 
+    
+    transform: scale(1.1); 
+}
+
+/* Keyframes: slow, magical shifting movement */
+@keyframes moveSphere {
+    0% {
+        transform: translate(0, 0) scale(1.0);
+    }
+    33% {
+        /* Move closer and become slightly larger */
+        transform: translate(45vw, 55vh) scale(1.3); 
+    }
+    66% {
+        /* Move away and become smaller/further */
+        transform: translate(-20vw, -30vh) scale(0.8); 
+    }
+    100% {
+        transform: translate(0, 0) scale(1.0);
+    }
+}
+
+.content-wrapper {
+    position: relative;
+    z-index: 10;
+    padding: 20px; 
+}
+
+/* Dark Mode adjustment*/
+body.dark-mode .animated-background-sphere {
+    opacity: 0.4; /
+}
+
+* Use a soft, subtle gradient border under key sections */
+.main-content h2, 
+.goal-card h4 {
+    position: relative;
+    padding-bottom: 5px; 
+    margin-bottom: 15px;
+}
+
+.main-content h2::after,
+.goal-card h4::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, 
+                rgba(95, 39, 205, 0.1) 0%, 
+                #c77dff 50%, 
+                rgba(0, 184, 148, 0.1) 100%);
+    border-radius: 1px;
+}
+
+/* --- Magical Motto Styling --- */
+.motto {
+    font-size: 1.2rem !important;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 15px;
+    
+    background: linear-gradient(90deg, 
+                #00b894 20%, 
+                #5f27cd 60%);
+    background-size: 120% 100%;
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent; 
+    
+    animation: shimmer-text 5s linear infinite alternate;
+      
+    letter-spacing: 0.05em;
+    transform: scaleY(1.02);
+}
+    @keyframes shimmer-text {
+    0% {
+        background-position: 0% 0;
+    }
+    100% {
+        background-position: 10% 0; 
+    }
+} 
+
+.motto:hover {
+    background-position: 100% 0; 
+    transform: scale(1.05); 
+}
+
+/* --- Dark Mode Override --- */
+body.dark-mode .motto {
+    background: linear-gradient(90deg, 
+                #00b894 0%, 
+                #c77dff 100%); 
+    background-size: 200% 100%;
+    animation: shimmer-text 5s linear infinite alternate;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent; 
+    
+    text-shadow: 
+        0 0 8px rgba(150, 125, 255, 1), 
+        0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.goal-card p {
+    font-weight: 500; 
+    color: #22223b; 
+    line-height: 1.6;
+}
+body.dark-mode .goal-card p {
+    color: #f4f4f4; 
+}
+
+/* --- Sparkle Glow Animation Keyframes --- */
+@keyframes fairySparkle {
+    0% { 
+        opacity: 0; 
+        transform: scale(0.5); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1); /* Full size and brightest */
+    }
+    100% { 
+        opacity: 0; 
+        transform: scale(0.5); 
+    }
+}
+
+/* --- Motto Hover Effect --- */
+.motto {
+    position: relative; 
+    overflow: visible; 
+    cursor: pointer;   
+    transition: all 0.2s ease;
+}
+
+
+.motto:hover::after {
+    content: '✨'; 
+    position: absolute;
+    right: 288px; 
+    top: -13px; 
+
+    font-size: 1.8rem; 
+
+    text-shadow: 
+        0 0 5px rgba(95, 39, 205, 0.6), 
+        0 0 10px rgba(0, 0, 0, 0.3); 
+    
+    animation: fairySparkle 1.5s ease-out infinite; 
+}
+
+
+.motto:hover {
+    text-shadow: 
+        0 0 7px rgba(123, 233, 229, 0.9), 
+        0 0 15px rgba(255, 255, 255, 0.6); 
+}
+body.dark-mode .motto:hover::after {
+    text-shadow: 
+        0 0 5px #ffffff,       
+        0 0 10px #c77dff,      
+        0 0 15px rgba(255, 255, 255, 0.2); 
+}
+
+body.dark-mode .motto:hover {
+    text-shadow: 
+        0 0 7px rgba(199, 125, 255, 1), 
+        0 0 15px rgba(255, 255, 255, 0.4); 
+}
+
+#spendingTrendChart {
+    width: 800px !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 350px;
+    margin-top: 15px;
+}
+
+.health-summary {
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto; 
+    width: 100%; 
+}
+
+#healthFairyFeedback {
+    margin-top: 15px;
+    font-style: italic;
+    font-weight: 500;
+    text-align: center;
+    padding: 10px;
+}
+
+/* --- Themed Scrollbars (Webkit Only) --- */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f8f8ff; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c7d2e9; 
+    border-radius: 5px;
+    border: 2px solid #f8f8ff; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5f27cd; 
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #22223b; 
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #5f27cd; 
+    border: 2px solid #22223b;
 }

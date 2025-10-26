@@ -4,109 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyFinanceFairy</title>
-    <!-- Link to stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <!-- Papa Parse CDN for CSV parsing -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <!-- Chart.js CDN for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+    <script src="script.js"></script>
+    
 </head>
 <body>
+    <div class="animated-background-sphere"></div>
+    <div class="animated-background-sphere sphere-2"></div>
+    <div class="content-wrapper"></div>
+    
     <div class="container">
         <header>
-            <h1>MyFinanceFairy</h1>
-            <p>Upload a CSV file from your bank or credit card to get an instant breakdown of your spending.</p>
+            <h1 class="main-title">My Finance Fairy</h1>
+            <p class="motto">Your financial wish come true</p>
         </header>
 
-        <section class="upload-section">
-        <div class="upload-widget"></div>
-            <input type="file" id="csvFile" accept=".csv">
-            <label for="csvFile" class="upload-label">Choose a CSV File</label>
+        <div class="main-nav">
+            <button id="goals-tab" class="active">My Goals</button>
+            <button id="analysis-tab">Transaction Analysis</button>
         </div>
-            <!-- Date filter inputs -->
-            <div class="date-filter">
-                <label for="startDate">From:</label>
-                <input type="date" id="startDate">
-                <label for="endDate">To:</label>
-                <input type="date" id="endDate">
-                <button id="applyFilter">Apply Filter</button>
-                <button id="resetButton">Reset Dashboard</button>
-                <button id="exportCSV">Export Filtered CSV</button>
-                <button id="darkModeToggle" style="position: absolute; top: 20px; right: 20px; z-index: 2000;">🌙 Dark Mode</button>
-        
-            </div>
-            <div class="currency-widget">
-                <select id="currencySelect" class="currency-select">
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD ($)</option>
-                    <option value="AUD">AUD ($)</option>
-                    <option value="JPY">JPY (¥)</option>
-                    <option value="CNY">CNY (¥)</option>
-                </select>
-            </div>
-        </section>
 
-        <section class="summary-cards" style="display: none;">
-            <div class="card" id="incomeCard">Income: $0.00</div>
-            <div class="card" id="expenseCard">Expenses: $0.00</div>
-            <div class="card" id="balanceCard">Net Balance: $0.00</div>
-            <div class="card" id="insightsCard"></div>
-        </section>
+        <div id="content-container">
 
-        <section class="charts-section" id="chartsSection" style="display: none;">
-            <div class="chart-box">
-            <h2>Monthly Spending Trends</h2>
-            <canvas id="spendingTrendChart"></canvas>
-            </div>
-            <div class="chart-box">
-            <h2>Spending Breakdown by Category</h2>
-            <canvas id="pieChart"></canvas>
-            </div>
+            <div id="goals-view" class="content-panel visible">
+                <h2>Financial Goals & Health Score</h2>
+                <p>Welcome! Define your dreams to track your financial progress.</p>
+    
+                <section class="upload-section" style="margin-bottom: 20px;">
+                    <div class="upload-widget"></div>
+                    <input type="file" id="csvFile" accept=".csv">
+                    <label for="csvFile" class="upload-label">Choose a CSV File to Update Data</label>
+                </section>
+
+                <button id="showGoalFormButton" class="primary-button">➕ Create New Goal</button>
+
+                <section id="goalCreationForm" class="goal-form hidden">
+                    <h3>Define Your Goal</h3>
+                    <form id="newGoalForm">
+            
+                    <label for="goalName">Goal Name:</label>
+                    <input type="text" id="goalName" required placeholder="e.g., Summer Trip, Emergency Fund">
+
+                    <label for="targetAmount">Target Amount ($):</label>
+                    <input type="number" id="targetAmount" required min="10" placeholder="e.g., 3500.00">
+
+                    <label for="targetDate">Target Date (Optional):</label>
+                    <input type="date" id="targetDate">
+                    <div id="fairyProjection" class="projection-message">
+                        </div>
+
+                    <label for="currentSaved">Amount Already Saved ($):</label>
+                    <input type="number" id="currentSaved" value="0.00" min="0">
+
+
+                    <button type="submit" class="save-button">Save Goal</button>
+                    <button type="button" id="cancelGoalFormButton" class="cancel-button">Cancel</button>
+                </form>
+            </section>
+
+        <hr>
+    
+        <section id="activeGoalsList">
+            <h3>My Active Goals</h3>
+            <p class="placeholder-text">You haven't set any goals yet. Click "Create New Goal" above!</p>
         </section>
-        <div class="table-controls">
-            <button id="recentTransactions" class="table-button active">Recent Transactions</button>
-            <button id="allTransactions" class="table-button">All Transactions</button>
+    
+
         </div>
-        <section class="preview-table-section" style="display: none;">
-            <h2>Recent Transactions</h2>
-            <div class="preview-table-section"></div>
-            <div class="table-container">
-                <table id="previewTable">
-                    <thead>
-                        <tr>
-                            <th data-column="Date">Date</th>
-                            <th data-column="Description">Description</th>
-                            <th data-column="Amount">Amount</th>
-                            <th data-column="Category">Category</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Transaction rows will be inserted here by JavaScript -->
-                    </tbody>
-                </table>
+
+            <div id="analysis-view" class="content-panel hidden">
+                
+                <h2>Transaction Charts & Details</h2>
+
+                <div class="controls-wrapper">
+                    <div class="date-filter">
+                        <label for="startDate">From:</label>
+                        <input type="date" id="startDate">
+                        <label for="endDate">To:</label>
+                        <input type="date" id="endDate">
+                        <button id="applyFilter">Apply Filter</button>
+                        <button id="resetButton">Reset Dashboard</button>
+                        <button id="exportCSV">Export Filtered CSV</button>
+                    </div>
+                    <div class="currency-widget">
+                        <select id="currencySelect" class="currency-select">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="CAD">CAD ($)</option>
+                            <option value="AUD">AUD ($)</option>
+                            <option value="JPY">JPY (¥)</option>
+                            <option value="CNY">CNY (¥)</option>
+                        </select>
+                    </div>
+                </div>
+            
+            <div id="analysis-panel" class="content-panel"></div>
+                <section class="summary-cards" style="display: none;">
+                    <div class="card" id="incomeCard">Income: $0.00</div>
+                    <div class="card" id="expenseCard">Expenses: $0.00</div>
+                    <div class="card" id="balanceCard">Net Balance: $0.00</div>
+                    <div class="card" id="insightsCard"></div>
+                </section>
+
+                <section class="charts-section" id="chartsSection" style="display: none;">
+                    <div class="chart-box">
+                    <h2>Monthly Spending Trends</h2>
+                    <canvas id="spendingTrendChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                    <h2>Spending Breakdown by Category</h2>
+                    <canvas id="pieChart"></canvas>
+                    </div>
+                </section>
+                
+                <div class="table-controls">
+                    <button id="recentTransactions" class="table-button active">Recent Transactions</button>
+                    <button id="allTransactions" class="table-button">All Transactions</button>
+                </div>
+                
+                <section class="preview-table-section" style="display: none;">
+                    <h2>Recent Transactions</h2>
+                    <div class="table-container">
+                        <table id="previewTable">
+                            <thead>
+                                <tr>
+                                    <th data-column="Date">Date</th>
+                                    <th data-column="Description">Description</th>
+                                    <th data-column="Amount">Amount</th>
+                                    <th data-column="Category">Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="side-widget" id="transactionWidget">
+                    <span id="widgetLabel">Show Total Transactions</span>
+                    <div id="widgetResult" style="display:none; margin-top:10px;"></div>
+                </div>
+
+            </div> </div> 
+        </div> 
+        <div class="fairy-widget" id="fairyHelper">
+    
+            <div id="fairy" class="fairy">
+                </div>
+            
+            <div class="fairy-message-bubble">
+                <span id="fairyMessage"></span>
             </div>
+            
+        </div>
+
             </div>
-        </section>
-
-    </div>
-
-    <!-- Link to your custom JavaScript file -->
-     <script src="script.js"></script>
-
-     <div class="side-widget" id="transactionWidget">
-    <span id="widgetLabel">Show Total Transactions</span>
-    <div id="widgetResult" style="display:none; margin-top:10px;"></div>
-</div>
-
-<div class="fairy-widget">
-    <div class="fairy-message-bubble">
-        <span id="fairyMessage"></span>
-    </div>
-    <div id="fairy" class="fairy"></div>
-</div>
+        </div>
+    <button id="darkModeToggle" style="position: fixed; top: 20px; right: 20px; z-index: 2000;">🌙 Dark Mode</button>
+    <script src="script.js"></script>
 
 </body>
 </html>
-
